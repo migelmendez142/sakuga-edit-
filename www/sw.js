@@ -1,5 +1,5 @@
 // Sakuga Edit – Offline-Cache. Bei jeder neuen Version VERSION hochzählen.
-const VERSION = 'sakuga-v4';
+const VERSION = 'sakuga-v5';
 const SHELL = [
   './', 'index.html', 'manifest.webmanifest',
   'icons/icon-32.png', 'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png',
