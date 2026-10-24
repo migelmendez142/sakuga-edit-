@@ -87,7 +87,13 @@ Lokal testen am PC: `npm run serve` und dann `http://localhost:8080` im Browser 
 - **Bewegung:** Motion Blur, Echo, Tempo-Kurven (Velocity, Hero, Bullet, Montage), 12/8-fps-Anime-Look
 - **Übergänge:** Swipe, Whip, Zoom-Through, Spin, 3D-Flip, Flash, Glitch, Pixel, Mix
 - **Look:** 6 Farblooks, Glow, Anime-Linien, Cel-Shading, Halftone, Lichtstrahlen, Wave, Spiegel/Kaleido, Vignette, Körnung, Kino-Balken
-- **Text:** mehrere Ebenen, 8 Animationen (u. a. Wort für Wort im Takt), 5 Stile, 5 Schriften
+- **Ebenen (Pro-Modus):** Text, Formen (Rechteck, Kreis, Stern, Dreieck, Herz, Ring, Linie), Overlay-Videos/-Bilder, Farbflächen
+- **Keyframes:** Position, Grösse, Drehung, Deckkraft · Easing (Linear, Ease, In, Out, Overshoot, Bounce, Hold) · Gesten direkt im Bild
+- **Animationen mit einem Tap:** Pop-In, Slide-Up, Zoom-In, Spin-In, Fade-In/-Out, Pop-Out, Slide-Down, Zoom-Out
+- **Effekte pro Ebene:** Glow, Blur, RGB-Split, Pixel, Wave, Chroma-Key (Greenscreen), Farbton, Helligkeit, Shake/Pulse auf Beat · Blend-Modi Normal/Addieren/Screen/Multiplizieren
+- **Text:** 8 Animationen (u. a. Wort für Wort im Takt), 4 Stile, 5 Schriften, freie Farben
+- **Musik-Bibliothek:** 6 Sakuga-Sounds ohne Copyright (Phonk, Trap, EDM, Anime Rush, Lo-Fi, Drill)
+- **Projekte:** automatisch gespeichert (auf dem Gerät), Rückgängig/Wiederholen
 - **Presets:** 8 eingebaute Styles, eigene Presets speichern
 - **Export:** MP4 (oder WebM), 720p/1080p, 30/60 fps, ohne Wasserzeichen
 
