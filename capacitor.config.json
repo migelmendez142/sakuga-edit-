@@ -1,0 +1,27 @@
+{
+  "appId": "ch.sakuga.edit",
+  "appName": "Sakuga Edit",
+  "webDir": "www",
+  "backgroundColor": "#0e0c13",
+  "android": {
+    "backgroundColor": "#0e0c13",
+    "allowMixedContent": false
+  },
+  "ios": {
+    "backgroundColor": "#0e0c13",
+    "contentInset": "never",
+    "scrollEnabled": true
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchAutoHide": false,
+      "backgroundColor": "#0e0c13",
+      "showSpinner": false
+    },
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#0e0c13",
+      "overlaysWebView": true
+    }
+  }
+}

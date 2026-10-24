@@ -1,0 +1,29 @@
+{
+  "name": "sakuga-edit",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sakuga Edit – Anime-Edits automatisch im Takt",
+  "scripts": {
+    "serve": "npx --yes http-server www -p 8080 -c-1",
+    "setup:android": "npx cap add android && npm run assets && npm run patch && npx cap sync android",
+    "setup:ios": "npx cap add ios && npm run assets && npm run patch && npx cap sync ios",
+    "assets": "npx --yes @capacitor/assets@3 generate --iconBackgroundColor '#ff4f8b' --iconBackgroundColorDark '#ff4f8b' --splashBackgroundColor '#0e0c13' --splashBackgroundColorDark '#0e0c13'",
+    "patch": "node scripts/patch-native.mjs",
+    "sync": "npx cap sync",
+    "open:android": "npx cap open android",
+    "open:ios": "npx cap open ios"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/core": "^7.0.0",
+    "@capacitor/filesystem": "^7.0.0",
+    "@capacitor/haptics": "^7.0.0",
+    "@capacitor/ios": "^7.0.0",
+    "@capacitor/share": "^7.0.0",
+    "@capacitor/splash-screen": "^7.0.0",
+    "@capacitor/status-bar": "^7.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.0.0"
+  }
+}

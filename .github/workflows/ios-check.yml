@@ -1,0 +1,26 @@
+name: iOS-Version prüfen (ohne Signatur)
+
+# Läuft nur, wenn du es unter "Actions" von Hand startest (macOS-Minuten sind begrenzt).
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Pakete installieren
+        run: npm install
+
+      - name: iOS-Projekt erzeugen
+        run: npm run setup:ios
+
+      - name: Für den Simulator kompilieren
+        run: |
+          if [ -d ios/App/App.xcworkspace ]; then TARGET="-workspace ios/App/App.xcworkspace"; else TARGET="-project ios/App/App.xcodeproj"; fi
+          xcodebuild $TARGET -scheme App -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build | tail -n 40

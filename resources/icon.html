@@ -1,0 +1,22 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:Dela;src:url(../www/fonts/dela.woff) format("woff")}
+html,body{margin:0;background:transparent}
+.ic{width:1024px;height:1024px;position:relative;overflow:hidden;background:#ff4f8b;display:flex;align-items:center;justify-content:center}
+canvas{position:absolute;inset:0}
+.k{position:relative;font-family:Dela;font-size:400px;line-height:.92;color:#1a0710;text-align:center;letter-spacing:-.02em;writing-mode:horizontal-tb}
+.sp{width:2732px;height:2732px;background:#0e0c13;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:60px}
+.sp .tile{width:560px;height:560px;border-radius:120px;background:#ff4f8b;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.sp .tile .k{font-size:220px}
+.sp .nm{font-family:Dela;font-size:120px;color:#f0ebf6}
+.fg{width:1024px;height:1024px;background:transparent;display:flex;align-items:center;justify-content:center}
+.fg .k{font-size:300px}
+</style></head><body>
+<div class="ic" id="icon"><canvas id="c" width="1024" height="1024"></canvas><div class="k">作<br>画</div></div>
+<div class="sp" id="splash"><div class="tile"><canvas id="c2" width="560" height="560"></canvas><div class="k">作<br>画</div></div><div class="nm">Sakuga Edit</div></div>
+<div class="fg" id="fg"><div class="k">作<br>画</div></div>
+<div class="ic" id="bg" style="width:1024px;height:1024px"><canvas id="c3" width="1024" height="1024"></canvas></div>
+<script>
+function lines(id,s){const c=document.getElementById(id),x=c.getContext('2d'),w=c.width,cx=w/2,cy=w/2;let seed=7;const r=()=>{seed=(seed*16807)%2147483647;return seed/2147483647};
+for(let k=0;k<120;k++){const a=r()*Math.PI*2,wd=.006+r()*.014,r0=w*(.33+r()*.12);x.fillStyle=`rgba(255,235,243,${.25+r()*.35})`;x.beginPath();x.moveTo(cx+Math.cos(a-wd)*r0,cy+Math.sin(a-wd)*r0);x.lineTo(cx+Math.cos(a)*w,cy+Math.sin(a)*w);x.lineTo(cx+Math.cos(a+wd)*r0,cy+Math.sin(a+wd)*r0);x.fill();}}
+lines('c');lines('c2');lines('c3');
+</script></body></html>
