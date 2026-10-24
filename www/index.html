@@ -102,7 +102,11 @@ button,input,select,label.btn{font:inherit;color:inherit}
 .preview{position:relative;align-self:center;height:min(56vh,700px);aspect-ratio:9/16;max-width:100%;border-radius:14px;overflow:hidden;background:#000;box-shadow:0 0 0 1px var(--line)}
 .preview canvas{width:100%;height:100%;display:block;object-fit:contain}
 .preview #ov{position:absolute;inset:0;pointer-events:none}
-.preview.edit #view{touch-action:none}
+.preview.edit #view{touch-action:none;cursor:move}
+.kbd{display:none}
+@media (pointer:fine){.kbd{display:block}}
+.kbd kbd{font-family:var(--mono);font-size:11px;background:var(--raised);border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:1px 6px;margin-right:2px}
+.dropzone{position:fixed;inset:0;z-index:70;background:rgba(255,79,139,.18);border:3px dashed var(--sakura);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:28px;color:var(--fg);pointer-events:none}
 .preview.full{position:fixed;inset:0;z-index:45;height:100%;width:100%;max-width:none;aspect-ratio:auto;border-radius:0;padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)}
 .bigplay{position:absolute;inset:0;margin:auto;width:76px;height:76px;border-radius:50%;border:0;background:rgba(14,12,19,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);font-size:28px;cursor:pointer;color:#fff}
 .badge{position:absolute;top:10px;left:10px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;background:rgba(14,12,19,.7);padding:4px 8px;border-radius:6px}
@@ -255,6 +259,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
         <li><div><b>Style antippen &amp; exportieren</b><span>Alles sitzt im Takt. Ebenen und Keyframes sind optional.</span></div></li>
       </ol>
     </section>
+    <p class="hint kbd">Am PC: Videos, Bilder und Songs einfach ins Fenster ziehen. In Chrome oder Edge oben in der Adressleiste auf «App installieren» klicken, dann hast du Sakuga Edit als Desktop-App.</p>
     <div class="trust"><span>Kein Wasserzeichen</span><span>Kein Abo</span><span>Läuft auf deinem Handy</span><span>Projekte werden gespeichert</span></div>
   </div>
 
@@ -369,6 +374,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
           </div>
           <input id="layerMediaIn" type="file" accept="video/*,image/*" hidden>
           <canvas id="ltl" class="ltl" aria-label="Ebenen-Zeitleiste"></canvas>
+          <p class="hint kbd"><kbd>Leertaste</kbd> Play · <kbd>Strg+Z</kbd> Rückgängig · <kbd>Entf</kbd> Ebene löschen · <kbd>Pfeile</kbd> verschieben · <kbd>Mausrad</kbd> skalieren · <kbd>Alt+Mausrad</kbd> drehen · <kbd>K</kbd> Keyframe · <kbd>J</kbd>/<kbd>L</kbd> Bild zurück/vor · <kbd>F</kbd> Vollbild</p>
           <p class="hint" id="layerHint">Ebene antippen zum Bearbeiten. Im Vorschaubild mit einem Finger verschieben, mit zwei Fingern skalieren und drehen. Balken ziehen zum Verschieben, Ränder ziehen zum Kürzen.</p>
           <div class="subcard" id="layerEdit" hidden>
             <div class="lhead"><b id="lname">Ebene</b>
@@ -449,6 +455,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 </div>
 <div id="toast" class="toast" hidden></div>
 <div id="vids" class="vids" aria-hidden="true"></div>
+<div id="dropzone" class="dropzone" hidden>Dateien hier ablegen</div>
 
 <script>
 (function(){
@@ -1549,6 +1556,53 @@ function renderStyleCards(withThumbs){
   });
   Object.assign(state.fx,saved.fx);Object.assign(state.look,saved.look);state.preset=saved.preset;state.t=saved.t;dirty=true;
 }
+
+/* ================= desktop: keyboard, wheel, drag & drop ================= */
+function typing(e){const t=e.target;return t&&(t.tagName==='INPUT'&&!['range','button','color'].includes(t.type)||t.tagName==='TEXTAREA'||t.isContentEditable);}
+document.addEventListener('keydown',e=>{
+  if(!editorOn||state.exporting||typing(e))return;const mod=e.ctrlKey||e.metaKey,k=e.key,L=SL(),T=total();
+  if(mod&&(k==='z'||k==='Z')){e.preventDefault();(e.shiftKey?$('#redoBtn'):$('#undoBtn')).click();return;}
+  if(mod&&(k==='y'||k==='Y')){e.preventDefault();$('#redoBtn').click();return;}
+  if(mod&&(k==='d'||k==='D')&&L){e.preventDefault();$('#lDup').click();return;}
+  if(mod)return;
+  if(k===' '){e.preventDefault();state.playing?pause():play();return;}
+  if(k==='Home'){e.preventDefault();pause();seek(0);return;}
+  if(k==='End'){e.preventDefault();pause();seek(T-.01);return;}
+  if(k==='j'||k==='J'){pause();seek(state.t-1/30);return;}
+  if(k==='l'||k==='L'){pause();seek(state.t+1/30);return;}
+  if(k==='f'||k==='F'){$('#preview').classList.contains('full')?exitFs():enterFs();return;}
+  if(k==='Escape'){if($('#preview').classList.contains('full'))exitFs();else if(!$('#exportSheet').hidden)$('#exportSheet').hidden=true;else if(L){state.selLayer=null;renderLayerPanel();}return;}
+  if(!layerMode()||!L)return;
+  if(k==='Delete'||k==='Backspace'){e.preventDefault();$('#lDel').click();return;}
+  if(k==='k'||k==='K'){$('#kfAll').click();return;}
+  const st=e.shiftKey?.05:.005;let dx=0,dy=0;
+  if(k==='ArrowLeft')dx=-st;else if(k==='ArrowRight')dx=st;else if(k==='ArrowUp')dy=-st;else if(k==='ArrowDown')dy=st;else return;
+  e.preventDefault();if(state.playing)pause();
+  if(dx)setProp(L,'x',valAt(L,'x',state.t)+dx,state.t);if(dy)setProp(L,'y',valAt(L,'y',state.t)+dy,state.t);
+  dirty=true;syncKf();clearTimeout(nudgeTo);nudgeTo=setTimeout(commit,400);
+});
+let nudgeTo=0,wheelTo=0;
+cv.addEventListener('wheel',e=>{
+  if(!layerMode())return;const L=SL();if(!L)return;e.preventDefault();if(state.playing)pause();
+  const d=-e.deltaY;
+  if(e.altKey||e.shiftKey)setProp(L,'rot',valAt(L,'rot',state.t)+(d>0?3:-3),state.t);
+  else setProp(L,'scale',clamp(valAt(L,'scale',state.t)*Math.exp(d*.0015),.05,6),state.t);
+  dirty=true;syncKf();clearTimeout(wheelTo);wheelTo=setTimeout(commit,400);
+},{passive:false});
+let dragDepth=0;
+const isFiles=e=>e.dataTransfer&&[...(e.dataTransfer.types||[])].includes('Files');
+window.addEventListener('dragenter',e=>{if(!isFiles(e))return;e.preventDefault();dragDepth++;$('#dropzone').hidden=false;});
+window.addEventListener('dragover',e=>{if(!isFiles(e))return;e.preventDefault();e.dataTransfer.dropEffect='copy';});
+window.addEventListener('dragleave',e=>{if(!isFiles(e))return;dragDepth=Math.max(0,dragDepth-1);if(!dragDepth)$('#dropzone').hidden=true;});
+window.addEventListener('drop',async e=>{
+  if(!isFiles(e))return;e.preventDefault();dragDepth=0;$('#dropzone').hidden=true;
+  const files=[...e.dataTransfer.files];if(!files.length)return;
+  const audio=files.filter(f=>(f.type||'').startsWith('audio/')||/\.(mp3|m4a|wav|aac|ogg|flac)$/i.test(f.name));
+  const vis=files.filter(f=>!audio.includes(f));
+  if(!editorOn){newProject();openEditor('clips');}
+  if(vis.length){if(layerMode()){for(const f of vis){const dt=new DataTransfer();dt.items.add(f);const inp=$('#layerMediaIn');inp.files=dt.files;inp.dispatchEvent(new Event('change'));}}else await importClips(vis);}
+  if(audio.length){const dt=new DataTransfer();dt.items.add(audio[0]);const inp=$('#musicIn');inp.files=dt.files;inp.dispatchEvent(new Event('change'));}
+});
 
 /* ================= boot ================= */
 async function boot(){
