@@ -588,7 +588,9 @@ vec3 samp(vec2 uv,vec2 d){return vec3(texture2D(uSrc,mir(uv+d)).r,texture2D(uSrc
 float lum(vec3 c){return dot(c,vec3(.299,.587,.114));}
 void main(){
  vec2 p=vUv;
+ //F>
  if(uSplitT<.999){float pn=floor(p.x*3.);float dr=mod(pn,2.)*2.-1.;float e=1.-uSplitT;p.y+=dr*e*e*1.25;if(p.y<0.||p.y>1.){gl_FragColor=vec4(0.,0.,0.,1.);return;}}
+ //<F
  if(uMirror>.5){p.x=.5-abs(p.x-.5);if(uMirror>1.5)p.y=.5-abs(p.y-.5);}
  if(uWave>.001){p.x+=sin(p.y*18.+uTime*5.)*uWave*.025;p.y+=sin(p.x*14.+uTime*4.)*uWave*.012;}
  if(uPix>.001){float N=mix(220.,16.,uPix);vec2 g=vec2(N,N/uAsp);p=(floor(p*g)+.5)/g;}
@@ -606,9 +608,13 @@ void main(){
  col=(col-.5)*(1.+uContrast)+.5;
  float l=lum(col);col=mix(vec3(l),col,1.+uSat);col*=uTint;
  col+=uSplit*mix(uSh,uHi,clamp(l,0.,1.));
+ //F>
  if(abs(uHueRot)>.001)col=hueRot(col,uHueRot);
+ //<F
  col=mix(col,vec3(smoothstep(.08,.92,l)),uBw);
+ //F>
  if(uDuo>.001){float l2=lum(clamp(col,0.,1.));col=mix(col,mix(uDuoC*1.1,vec3(1.),smoothstep(.22,.92,l2)),uDuo);}
+ //<F
  if(uCel>.001){float lv=mix(14.,3.,uCel);col=floor(col*lv+.5)/lv;}
  col=clamp(col,0.,1.);
  col=mix(col,texture2D(uPrev,vUv).rgb,uTrail);
@@ -641,11 +647,13 @@ void main(){vec3 col=texture2D(uScene,vUv).rgb;
  vec2 c=vUv-.5;c.x*=uAsp;float r=length(c);float a=atan(c.y,c.x);
  if(uRays>.001){float ry=pow(max(0.,sin(a*14.+uTime*.9)),10.)+.6*pow(max(0.,sin(a*9.-uTime*.6+1.7)),12.);col+=ry*(1.-smoothstep(.05,.9,r))*uRays*.55*vec3(1.,.93,.96);}
  if(uLines>.001){float fa=(a+3.14159)/6.28318*180.;float sg=floor(fa);float h=fract(sin(sg*91.7+uSeed*13.1)*43758.5453);float th=1.-smoothstep(0.,.45,abs(fract(fa)-.5));float ln=step(.78,h)*smoothstep(.2+h*.25,.75,r)*th;col=mix(col,vec3(1.),clamp(ln*uLines,0.,1.));}
+ //F>
  vec2 q2=vec2(vUv.x*uAsp,vUv.y);float pulse=.5+.9*uBeatE;
  if(uBokeh>.001){float s=0.;for(int l=0;l<2;l++){float sc=l==0?4.:7.;vec2 g=q2*sc;g.y+=uTime*(.03+.03*float(l));g.x+=sin(uTime*.2+float(l))*.2;vec2 id=floor(g),f=fract(g)-.5;float h=h21(id+float(l)*17.);vec2 o=vec2(h21(id+3.1),h21(id+5.7))-.5;float rr=.16+.22*h;float d=length(f-o*.4);s+=step(.58,h)*(smoothstep(rr,rr*.55,d)*.8+smoothstep(rr,rr*.9,d)*.4)*(.4+.6*h);}col+=s*uOvC*uBokeh*.6*pulse;}
  if(uSpark>.001){vec2 g=q2*38.;vec2 id=floor(g),f=fract(g)-.5;float h=h21(id);float tw=pow(max(0.,sin(uTime*5.+h*40.)),8.);float st=step(.9,h)*tw*(smoothstep(.12,0.,length(f))+smoothstep(.04,0.,abs(f.x))*smoothstep(.35,0.,abs(f.y))*.6+smoothstep(.04,0.,abs(f.y))*smoothstep(.35,0.,abs(f.x))*.6);col+=st*mix(vec3(1.),uOvC,.4)*uSpark*1.6*pulse;}
  if(uEmber>.001){vec2 g=q2*vec2(14.,10.);g.y-=uTime*.35;g.x+=sin(g.y*1.3+uTime)*.3;vec2 id=floor(g),f=fract(g)-.5;float h=h21(id+9.);vec2 o=vec2(h21(id+1.3),h21(id+2.9))-.5;float d=length((f-o*.6)*vec2(1.,.6));col+=step(.72,h)*smoothstep(.07,0.,d)*vec3(1.,.55,.15)*uEmber*2.*pulse;}
  if(uLight>.001&&uBeatE>.04){float L=0.;for(int k=0;k<3;k++){float fk=float(k);float sd=floor(uTime*12.)+fk*7.;float x0=.5+(fk-1.)*.24;float y=vUv.y;float xx=x0+(vn(y*6.+sd)-.5)*.26+(vn(y*23.+sd*3.)-.5)*.06;float d=abs(vUv.x-xx)*uAsp;L+=exp(-d*260.)*1.2+exp(-d*40.)*.25;}col+=L*mix(uOvC,vec3(1.),.35)*uLight*uBeatE*1.7;}
+ //<F
  col+=uFlash;
  col*=mix(1.,smoothstep(.95,.2,r*1.3),uVig);
  float n=fract(sin(dot(floor(vUv*vec2(900.,1600.))+fract(uTime*7.13)*97.,vec2(12.9898,78.233)))*43758.5453);
@@ -655,10 +663,13 @@ void main(){vec3 col=texture2D(uScene,vUv).rgb;
 
 function sh(type,src){const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s));return s;}
 function prog(vs,fs){const p=gl.createProgram();gl.attachShader(p,sh(gl.VERTEX_SHADER,vs));gl.attachShader(p,sh(gl.FRAGMENT_SHADER,fs));gl.bindAttribLocation(p,0,'aP');gl.linkProgram(p);if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(p));const u={};const n=gl.getProgramParameter(p,gl.ACTIVE_UNIFORMS);for(let i=0;i<n;i++){const a=gl.getActiveUniform(p,i);u[a.name]=gl.getUniformLocation(p,a.name);}return{p,u};}
-let P1,P2,PL,srcTex,fbt=[],fbs=[],cur=0;
+let P1,P2,PL,srcTex,fbt=[],fbs=[],cur=0,glMode='voll';
+let glErr='';
+const lite=src=>src.replace(/\/\/F>[\s\S]*?\/\/<F/g,'');
 function mkTex(){const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,1,1,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array([14,12,19,255]));return t;}
 function initGL(){
-  P1=prog(VS,FS1);P2=prog(VS,FS2);PL=prog(VSL,FSL);
+  try{P1=prog(VS,FS1);P2=prog(VS,FS2);}catch(e){console.warn('full shader failed',e);glErr=String(e&&e.message||e);P1=prog(VS,lite(FS1));P2=prog(VS,lite(FS2));glMode='lite';}
+  try{PL=prog(VSL,FSL);}catch(e){glErr=(glErr||'')+' | layer: '+String(e&&e.message||e);throw e;}
   const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
   gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);
   srcTex=mkTex();fbt=[mkTex(),mkTex()];fbs=[gl.createFramebuffer(),gl.createFramebuffer()];
@@ -1027,6 +1038,9 @@ let editorOn=false;
 function loop(){
   requestAnimationFrame(loop);
   if(!editorOn&&!state.exporting)return;
+  try{loopBody();}catch(e){if(!frameErr){frameErr=true;console.error(e);showGlError('Fehler beim Zeichnen: '+(e&&e.message||e));}}
+}
+function loopBody(){
   if(state.playing){
     let t=now();const T=total();
     if(t>=T){if(state.exporting){state.t=T;draw(T);finishExport(false);return;}pause();state.t=0;play();t=0;}
@@ -1886,17 +1900,24 @@ window.addEventListener('drop',async e=>{
   if(audio.length){const dt=new DataTransfer();dt.items.add(audio[0]);const inp=$('#musicIn');inp.files=dt.files;inp.dispatchEvent(new Event('change'));}
 });
 
+function showGlError(msg){const pv=$('#preview');let d=$('#glerr');if(!d){d=document.createElement('div');d.id='glerr';d.style.cssText='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:18px;text-align:center;font-size:13px;color:#f0ebf6;background:#17141e;overflow:auto';pv.appendChild(d);}d.textContent=msg+' — Bitte Screenshot an Claude schicken.';}
+let frameErr=false;
+window.addEventListener('error',e=>{try{toast('Fehler: '+(e.message||'unbekannt'),7000);}catch(_){}});
+window.addEventListener('unhandledrejection',e=>{try{const m=e.reason&&(e.reason.message||String(e.reason));if(m)console.warn(m);}catch(_){}});
+
 /* ================= boot ================= */
 async function boot(){
   platformInit();
   renderStyleCards(false);renderLib();renderProjects();
   if(!gl){$('#preview').innerHTML='<p class="hint" style="padding:20px">Dein Browser unterstützt kein WebGL. Öffne die App in Safari oder Chrome.</p>';return;}
-  try{initGL();}catch(e){console.error(e);toast('Grafik konnte nicht starten.');return;}
+  let glOk=true;try{initGL();}catch(e){console.error(e);glOk=false;showGlError('Grafik konnte nicht starten: '+(glErr||String(e&&e.message||e)));}
+  if(!glOk){renderClips();renderUP();syncBinds();try{const buf=await makeDemoMusic();if(!state.music)await setMusic(buf,'Beispiel-Beat',true);}catch(e){}return;}
+  if(glMode==='lite')toast('Einfacher Grafik-Modus aktiv (einige Overlays aus)',4000);
   renderClips();renderLayerPanel();renderUP();syncBinds();refresh();requestAnimationFrame(loop);
   try{await Promise.race([Promise.all([document.fonts.load('400 120px "Dela Gothic One"','覚醒限界突破最終決戦無双NO LIMITS'),document.fonts.load('900 26px "Zen Kaku Gothic New"','BEISPIEL'),document.fonts.load('400 40px "Anton"','A'),document.fonts.load('400 40px "Bangers"','A'),document.fonts.load('400 40px "Permanent Marker"','A')]),new Promise(r=>setTimeout(r,2500))]);}catch(e){}
-  state.clips=[0,1,2,3].map(demoArt);renderClips();
+  if(!state.clips.length&&!state.mclips.length){state.clips=[0,1,2,3].map(demoArt);renderClips();}
   try{const buf=await makeDemoMusic();if(!state.music)await setMusic(buf,'Beispiel-Beat · Build-up + Drop',true);}catch(e){console.error(e);}
-  state.songStart=0;state.length=Math.min(15,state.music?state.music.duration:15);syncBinds();refresh();
+  if(state.music&&state.music.demo){state.songStart=0;state.length=Math.min(15,state.music.duration);}syncBinds();refresh();
   if(!state.layers.length){state.layers.push(newText({text:'NO LIMITS NO FEAR',anim:'words',style:'outline',y:.1,size:.42,start:state.dropEdit??0,end:total(),demo:true}));}
   state.selLayer=null;renderLayerPanel();renderManual();resetHistory();
   renderStyleCards(true);updDemo();updSteps();dirty=true;changed=false;
