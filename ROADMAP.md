@@ -51,6 +51,21 @@ Ideensammlung für die nächsten Versionen. Neue Wünsche einfach unten ergänze
 - [x] **Invert-Blitz** auf einzelnen Frames, **Zoom-Blur** und **Richtungs-Blur** als Übergang
 - [x] **Split-Screen-Collage** (Sanji-Edit)
 
+### KI-Edit (Version 5, «Narrative + Sakuga»)
+- [x] **Prompt-Feld unter der Vorschau:** Edit beschreiben («make a world cup edit»), App baut ihn
+- [x] **Schnell-Modus** ohne Internet (Stichwörter) und **Claude-Modus** mit eigenem API-Schlüssel (sieht die Clips)
+- [x] **Mehrspur-Timeline:** Text, Effekte, Look, Beats, Audio, Clips
+- [x] Looks **Suspense Grade** (vor dem Drop) und **Saturation Pop** (nach dem Drop)
+
+### Aus 12 weiteren Edits (Uchiha, Black Clover, Goku, Madara, Toji …)
+- [x] **Text-Karte auf Schwarz** + Animation **«Wörter stapeln»** («YOURE NOT / EVEN IN THE / SAME LEAGUE»)
+- [x] **~Wort~ = nur Kontur**, gemischt mit weiss und rot
+- [x] Schrift **Metal** (Gothic/Grunge wie «ZANN»), Buchstabe für Buchstabe
+- [x] Stil **Banner (Wasted)**: dunkles Band über die ganze Breite
+- [x] Look **Nur Rot** (Color Isolation, Rest schwarz-weiss)
+- [x] Form **Stern-Blitz** (4-Zacken-Glanz auf dem Drop)
+- [x] Übergang **Tinte** (Tintenklecks deckt zu und gibt das nächste Bild frei)
+
 ## Ideen sammeln
 - [ ] Miguel sucht noch weitere Features (Tutorials als Bildschirmaufnahme schicken)
 
