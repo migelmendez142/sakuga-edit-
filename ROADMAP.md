@@ -66,6 +66,11 @@ Ideensammlung für die nächsten Versionen. Neue Wünsche einfach unten ergänze
 - [x] Form **Stern-Blitz** (4-Zacken-Glanz auf dem Drop)
 - [x] Übergang **Tinte** (Tintenklecks deckt zu und gibt das nächste Bild frei)
 
+### iPhone-Stabilität (Version 5.1)
+- [x] **Einfacher Grafik-Modus (2D)** ohne WebGL: springt automatisch ein, wenn Safari WebGL blockiert; Vorschau und Export laufen weiter
+- [x] Höchstens 4 Videos gleichzeitig im Speicher (iPhone), die nächsten Clips werden vorgeladen
+- [x] Grafik-Modus selbst wählbar: Voll · Sicher · Einfach (2D)
+
 ## Ideen sammeln
 - [ ] Miguel sucht noch weitere Features (Tutorials als Bildschirmaufnahme schicken)
 
