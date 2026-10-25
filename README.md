@@ -92,15 +92,15 @@ Lokal testen am PC: `npm run serve` und dann `http://localhost:8080` im Browser 
 - **Animationen mit einem Tap:** Pop-In, Slide-Up, Zoom-In, Spin-In, Fade-In/-Out, Pop-Out, Slide-Down, Zoom-Out
 - **Effekte pro Ebene:** Glow, Blur, RGB-Split, Pixel, Wave, Chroma-Key (Greenscreen), Farbton, Helligkeit, Shake/Pulse auf Beat · Blend-Modi Normal/Addieren/Screen/Multiplizieren
 - **Text:** 8 Animationen (u. a. Wort für Wort im Takt), 4 Stile, 5 Schriften, freie Farben
-- **Musik-Bibliothek:** 6 Sakuga-Sounds ohne Copyright (Phonk, Trap, EDM, Anime Rush, Lo-Fi, Drill)
+- **Musik-Bibliothek:** 7 Sakuga-Sounds ohne Copyright (Phonk Drift, Brazil Phonk, Trap, EDM, Anime Rush, Lo-Fi, Drill)
+- **KI-Regie:** baut Edits wie Profis (Hook → Build-up → Rampe → Drop → Outro), schaut sich die Clips an (Action auf den Drop), kennt TikTok-Trends (Phonk, Flow, Velocity, Head Bop, Aura …) und eigene gespeicherte Trends
 - **Projekte:** automatisch gespeichert (auf dem Gerät), Rückgängig/Wiederholen
 - **Presets:** 8 eingebaute Styles, eigene Presets speichern
-- **Export:** MP4 (oder WebM), 720p/1080p, 30/60 fps, ohne Wasserzeichen
+- **Export:** Bild für Bild (WebCodecs, ruckelfrei), MP4 720p/1080p, 30/60 fps, ohne Wasserzeichen; Echtzeit-Aufnahme als Rückfall
 
 ## Ideen für die nächsten Versionen
 
 - Auto-Untertitel aus Sprache (Spracherkennung auf dem Gerät)
-- Schnellerer Export als Echtzeit (nativer Video-Encoder)
 - Projekte speichern und später weiterbearbeiten
 - Hintergrund entfernen (KI-Cutout) und Auto-Framing für 16:9-Clips
 

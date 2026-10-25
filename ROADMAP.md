@@ -71,6 +71,18 @@ Ideensammlung für die nächsten Versionen. Neue Wünsche einfach unten ergänze
 - [x] Höchstens 4 Videos gleichzeitig im Speicher (iPhone), die nächsten Clips werden vorgeladen
 - [x] Grafik-Modus selbst wählbar: Voll · Sicher · Einfach (2D)
 
+### KI-Regie (Version 6): die KI weiss, wie gute Edits aufgebaut sind
+- [x] **Aufbau wie bei Profi-Edits:** Hook (stärkster Shot zuerst) → Build-up (ruhige, längere Shots) → Rampe (Schnitte werden schneller) → Drop (bester Clip genau auf den Drop, schnelle Cuts) → Outro
+- [x] **Die KI schaut sich jeden Clip an:** findet Action-Stellen, ruhige Stellen und schwarze Frames; Action kommt auf den Drop
+- [x] **Übergänge nur am Phrasen-Anfang**, sonst harte Cuts mit Zoom-Punch; Blitze nur auf starken Beats; ab und zu ein Shot länger halten
+- [x] **Texte kurz und selten** (1–2 s auf Hook oder Drop statt die ganze Zeit)
+- [x] **Trend-Bibliothek:** Phonk, Brazil Phonk, Flow, Velocity, Head Bop, Aura, Villain Arc, Emotional, Manga, Lyric/Typo, Glitch, VS, Sport
+- [x] **Eigene Trends speichern** (★): Edit gefällt → Namen geben → später nur den Namen eintippen
+- [x] Neue Sounds: **Brazil Phonk** (Tamborzão, verzerrte Cowbell, 808) und neue **Phonk Drift**
+- [x] **Export Bild für Bild** (WebCodecs): ruckelfrei 30/60 fps, volle Schärfe, Standard 1080p
+- [x] **Volle Auflösung:** Clips werden nicht mehr auf 540 px verkleinert (das war die Pixel-Ursache)
+- [ ] Trend «Honorable»: Miguel schickt Bildschirmaufnahmen, dann genau nachbauen
+
 ## Ideen sammeln
 - [ ] Miguel sucht noch weitere Features (Tutorials als Bildschirmaufnahme schicken)
 

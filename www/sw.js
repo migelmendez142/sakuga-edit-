@@ -1,10 +1,10 @@
 // Sakuga Edit – Offline-Cache. Bei jeder neuen Version VERSION hochzählen.
-const VERSION = 'sakuga-v11';
+const VERSION = 'sakuga-v12';
 const SHELL = [
   './', 'index.html', 'manifest.webmanifest',
   'icons/icon-32.png', 'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png',
   'fonts/dela.woff', 'fonts/cinzel.woff', 'fonts/metal.woff', 'fonts/anton.woff', 'fonts/bangers.woff', 'fonts/marker.woff', 'fonts/jbmono.woff',
-  'fonts/zen-Regular.woff', 'fonts/zen-Medium.woff', 'fonts/zen-Bold.woff', 'fonts/zen-Black.woff'
+  'fonts/zen-Regular.woff', 'fonts/zen-Medium.woff', 'fonts/zen-Bold.woff', 'fonts/zen-Black.woff', 'vendor/mp4-muxer.min.js'
 ];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));

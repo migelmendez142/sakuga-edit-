@@ -320,6 +320,7 @@ input[type=search]{-webkit-appearance:none;appearance:none}
           <button class="btn icon ghost" id="aiSet" type="button" aria-label="KI-Einstellungen">⚙</button>
         </form>
         <div class="aisug" id="aiSug"></div>
+        <div class="group" id="aiTrendRow" hidden><h4>Meine Trends</h4><div class="aisug" id="aiTrends"></div></div>
         <div class="subcard" id="aiPanel" hidden>
           <div class="group"><h4>KI-Modus</h4><div class="seg" id="aiMode"></div></div>
           <div class="group" id="aiKeyBox">
@@ -327,9 +328,10 @@ input[type=search]{-webkit-appearance:none;appearance:none}
             <div class="seg" id="aiModel"></div>
             <p class="hint">Mit Claude sieht die KI Vorschaubilder deiner Clips und plant Reihenfolge, Texte, Looks und Effekte. Den Schlüssel bekommst du auf console.anthropic.com. Er bleibt nur auf diesem Gerät gespeichert. Kosten: wenige Rappen pro Edit über deinen Anthropic-Account.</p>
           </div>
-          <p class="hint" id="aiModeHint">«Schnell» braucht kein Internet und keinen Schlüssel: Die App erkennt Stichwörter wie hype, sad, villain, world cup, gold, blitze, langsam, «Text in Anführungszeichen».</p>
+          <p class="hint" id="aiModeHint">«Schnell» braucht kein Internet und keinen Schlüssel. Die KI kennt diese Trends: Phonk, Brazil Phonk, Flow, Velocity, Head Bop, Aura, Villain Arc, Emotional/Sad, Manga, Lyric/Typo, Glitch, VS, Sport/World Cup. Dazu Stichwörter wie gold, blitze, nur rot und «Text in Anführungszeichen». Eigene Trends speicherst du nach einem Edit mit ★.</p>
         </div>
-        <div class="group" id="aiOut" hidden><p class="hint" id="aiStatus"></p><div class="aichips" id="aiChips"></div></div>
+        <div class="group" id="aiOut" hidden><p class="hint" id="aiStatus"></p><div class="aichips" id="aiChips"></div>
+          <div class="saverow" id="aiSaveRow" hidden><input id="aiTrendName" type="text" maxlength="40" placeholder="Gefällt dir? Als Trend speichern, z. B. honorable" aria-label="Trend-Name"><button class="btn" id="aiSaveTrend" type="button">★ Speichern</button></div></div>
       </section>
 
       <section class="panel" aria-label="Werkzeuge">
@@ -522,8 +524,8 @@ input[type=search]{-webkit-appearance:none;appearance:none}
     <div id="exStart" class="group">
       <div class="group"><h4>Qualität</h4><div class="seg" id="qSeg"></div></div>
       <div class="group"><h4>Bilder pro Sekunde</h4><div class="seg" id="fpsOutSeg"></div></div>
-      <p class="hint">Das Video wird in Echtzeit aufgenommen, das dauert so lange wie dein Edit (<b id="exLen">15 s</b>). Lass die App offen und den Bildschirm an. Kein Wasserzeichen.</p>
-      <div class="btnrow"><button class="btn primary" id="exGo" type="button">Aufnahme starten</button><button class="btn ghost" id="exCancel" type="button">Abbrechen</button></div>
+      <p class="hint">Dein Edit (<b id="exLen">15 s</b>) wird Bild für Bild berechnet: ruckelfrei und in voller Schärfe, auch mit vielen Effekten. Lass die App offen und den Bildschirm an. Kein Wasserzeichen.</p>
+      <div class="btnrow"><button class="btn primary" id="exGo" type="button">Export starten</button><button class="btn ghost" id="exCancel" type="button">Abbrechen</button></div>
     </div>
     <div id="exRun" class="group" hidden>
       <p class="big" id="exPct">0 %</p>
@@ -543,6 +545,7 @@ input[type=search]{-webkit-appearance:none;appearance:none}
 <div id="vids" class="vids" aria-hidden="true"></div>
 <div id="dropzone" class="dropzone" hidden>Dateien hier ablegen</div>
 
+<script src="vendor/mp4-muxer.min.js"></script>
 <script>
 (function(){
 "use strict";
@@ -591,7 +594,7 @@ const state={
   fx:Object.assign({},FX0),preset:'velocity',
   look:Object.assign({},LOOK0),
   layers:[],selLayer:null,lsub:'content',
-  t:0,playing:false,exporting:false,q:720,fpsOut:30,selClip:-1,
+  t:0,playing:false,exporting:false,q:1080,fpsOut:30,selClip:-1,
   done:{style:false,export:false},project:null,libId:null,mode:'auto',mclips:[],selM:-1,autoFx:true
 };
 let dirty=true;
@@ -761,7 +764,7 @@ function setRes(w){
   for(let i=0;i<2;i++){gl.bindTexture(gl.TEXTURE_2D,fbt[i]);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,W,H,0,gl.RGBA,gl.UNSIGNED_BYTE,null);gl.bindFramebuffer(gl.FRAMEBUFFER,fbs[i]);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,fbt[i],0);}
   gl.bindFramebuffer(gl.FRAMEBUFFER,null);dirty=true;lastUp=null;
 }
-let lastUp=null,lastQ=-1,srcDims=[9,16];
+let lastUp=null,lastQ=-1,srcDims=[9,16];let OFF=false;const nowT=()=>OFF?state.t:(performance.now()-rT0)/1000;
 function uploadTo(tex,el,premul){if(R2D||!tex)return;gl.bindTexture(gl.TEXTURE_2D,tex);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,!!premul);try{gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,el);}catch(e){}gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,false);}
 
 /* ---- robust video frames: draw through a 2D canvas (fixes black HDR videos on iPhone) ---- */
@@ -782,7 +785,8 @@ function vidSeek(m,tt){const v=m.el;if(v.readyState<1){m.pendT=tt;return;}try{v.
 function frameOf(m){
   if(m.kind!=='video')return m.el;
   const v=m.el;if(!m.att)vidAttach(m);if(v.readyState<2)return null;
-  if(m.fc.width!==m.fw){m.fc.width=m.fw;m.fc.height=m.fh;}
+  const fs=Math.min(1,Math.max(W/m.w,H/m.h)*1.15),fw=Math.max(2,Math.round(m.w*fs)),fh=Math.max(2,Math.round(m.h*fs));
+  if(m.fc.width!==fw||m.fc.height!==fh){m.fc.width=fw;m.fc.height=fh;}
   try{m.fx2.drawImage(v,0,0,m.fc.width,m.fc.height);}catch(e){return null;}
   return m.fc;
 }
@@ -806,6 +810,8 @@ function refresh(){
 }
 function buildSegments(){
   if(state.mode==='manual'){const segs=[];let t0=0;state.mclips.forEach((c,k)=>{segs.push({start:t0,end:t0+c.dur,clip:c,src:c.in,k});t0+=c.dur;});state.segs=segs;return;}
+  state._acc=null;
+  if(state.dir&&state.clips.length){const ds=directorSegs();if(ds.length){state.segs=ds;return;}}
   const T=total(),n=state.clips.length,segs=[];if(!n){state.segs=segs;return;}
   const eb=state.eb,f=state.fx,dp=f.dropMode?state.dropEdit:null;let cuts=[0];
   if(eb.length>=2){let i=0;while(i<eb.length){cuts.push(eb[i]);const step=(dp!=null&&eb[i]<dp-.05)?f.cutEvery*2:f.cutEvery;const ni=i+step;if(dp!=null&&eb[i]<dp-.05){const di=eb.findIndex(b=>b>=dp-.05);if(di>i&&di<ni){i=di;continue;}}i=ni;}}
@@ -821,11 +827,127 @@ function buildSegments(){
   }
   state.segs=segs;
 }
+/* ================= KI-Regie: so sind gute Edits aufgebaut =================
+   Wissen aus der Analyse vieler Referenz-Edits (Molob, Uchiha, Toji, Black Clover …) und Editing-Guides:
+   1. HOOK (erste ~1 s): stärkster Moment zuerst, sonst wischen die Leute weg.
+   2. BUILD-UP: längere, ruhigere Shots, wenig Effekte, Kamera gleitet. Spannung aufbauen.
+   3. RAMPE (letzter Takt vor dem Drop): Schnitte werden immer schneller.
+   4. DROP: bester Clip genau auf den Drop, dann schnelle Schnitte im Takt mit Impact.
+      Nicht jeder Schnitt bekommt einen Übergang: harte Cuts mit Zoom-Punch, Übergänge nur am Phrasen-Anfang (alle 4 Beats).
+      Ab und zu einen Shot länger halten (atmen lassen), sonst wird es Chaos.
+   5. OUTRO: ein letzter starker Shot, ruhiger.
+   Dazu: ein durchgehender Look, Text selten und kurz, Effekte auf die starken Beats statt auf jeden Beat. */
+const DSTY={
+  flow:{label:'Flow',hook:1,build:1.6,drop:.75,outro:1.6,trB:['blur','zoomblur'],trD:['zoomblur','blur'],phrase:4,trs:.8,curve:'velocity',vel:.55,drift:.8,flashAcc:.35,shake:.15},
+  phonk:{label:'Phonk',hook:.7,build:.9,drop:.45,outro:1.1,trB:['whip','zoom'],trD:['flash','glitch','zoom'],phrase:4,trs:.75,curve:'velocity',vel:.85,drift:.15,flashAcc:.9,shake:.9,fast:true},
+  hype:{label:'Hype',hook:.9,build:1.2,drop:.55,outro:1.2,trB:['whip','zoom'],trD:['flash','spin','zoomblur'],phrase:4,trs:.7,curve:'velocity',vel:.7,drift:.3,flashAcc:.7,shake:.6},
+  sport:{label:'Sport',hook:.9,build:1.3,drop:.6,outro:1.4,trB:['whip','zoomblur'],trD:['flash','whip','zoomblur'],phrase:4,trs:.7,curve:'velocity',vel:.7,drift:.3,flashAcc:.7,shake:.5},
+  sad:{label:'Emotional',hook:1.4,build:2.6,drop:1.5,outro:2.2,trB:['blur'],trD:['blur','zoomblur'],phrase:8,trs:.5,curve:'hero',vel:.35,drift:.9,flashAcc:.08,shake:0},
+  villain:{label:'Villain',hook:1.1,build:1.8,drop:.65,outro:1.6,trB:['zoomblur','blur'],trD:['invert','zoomblur','blur'],phrase:4,trs:.8,curve:'velocity',vel:.6,drift:.6,flashAcc:.5,shake:.4,dropTr:'ink'},
+  headbop:{label:'Head Bop',hook:.9,build:1.4,drop:1.1,outro:1.4,trB:['none'],trD:['none','zoom'],phrase:8,trs:.6,curve:'off',vel:0,drift:0,flashAcc:.2,shake:.2,bop:1},
+  manga:{label:'Manga',hook:1,build:1.5,drop:.6,outro:1.4,trB:['flash'],trD:['invert','flash','none'],phrase:4,trs:.7,curve:'bullet',vel:.5,drift:.3,flashAcc:.8,shake:.6},
+  aura:{label:'Aura',hook:1.2,build:2,drop:.9,outro:1.8,trB:['zoomblur'],trD:['zoomblur','flash'],phrase:4,trs:.8,curve:'hero',vel:.5,drift:.7,flashAcc:.6,shake:.3},
+  lyric:{label:'Lyric/Typo',hook:1.2,build:2.2,drop:1.2,outro:1.8,trB:['blur'],trD:['blur','none'],phrase:8,trs:.5,curve:'off',vel:0,drift:.6,flashAcc:.2,shake:.1}
+};
+const SEC_EN={hook:.85,build:.35,ramp:.65,drop:1,outro:.45};
+function beatPeriod(){const b=state.eb;if(b.length>=4){const d=[];for(let i=1;i<b.length;i++)d.push(b[i]-b[i-1]);d.sort((a,c)=>a-c);return clamp(d[d.length>>1],.2,1.2);}return state.bpm?60/state.bpm:.5;}
+const pow2=x=>{let best=1;for(const v of[1,2,4,8])if(Math.abs(Math.log(v/x))<Math.abs(Math.log(best/x)))best=v;return best;};
+function clipMoments(){
+  const out=[];
+  state.clips.forEach((c,ci)=>{const m=media.get(c.mid);if(!m)return;
+    if(m.kind!=='video'){out.push({c,m,ci,t:0,r:.2,br:.5,used:0});return;}
+    let an=c.an;if(!an||!an.length){const span=Math.max(.3,(m.dur||1)-c.in-.3),K=Math.max(2,Math.min(6,Math.floor(span/1.2)));an=[];for(let k=0;k<K;k++)an.push({t:c.in+(k+.15)*span/K,r:.5,br:.5});}
+    an.forEach(o=>out.push({c,m,ci,t:o.t,r:o.r!=null?o.r:.5,br:o.br!=null?o.br:.5,used:0}));});
+  return out;
+}
+function directorSegs(){
+  const T=total(),D=state.dir,S=DSTY[D.style]||DSTY.flow,p=beatPeriod();
+  let g=state.eb.length>=4?state.eb.slice():[];
+  if(!g.length)for(let x=p;x<T;x+=p)g.push(x);
+  const G=[];for(let i=0;i<g.length;i++){if(G.length){let a=G[G.length-1];while(g[i]-a>p*1.6){a+=p;G.push(a);}}G.push(g[i]);}
+  {let a=G.length?G[G.length-1]:0;while(a+p<T){a+=p;G.push(a);}}
+  g=G.filter(x=>x>.05&&x<T-.12);
+  const gi=t=>{const k=g.findIndex(x=>x>=t-.03);return k<0?g.length:k;};
+  let dp=state.dropEdit;if(dp==null&&T>8&&g.length){const k=gi(T*.35);dp=g[Math.min(k,g.length-1)];}
+  const nb=s=>Math.max(1,pow2(s/p));
+  const cuts=[];
+  const add=(t,sec,tr)=>{if(t==null||t<.05||t>T-.2)return;if(cuts.length&&t-cuts[cuts.length-1].t<.18)return;cuts.push({t,sec,tr,gi:gi(t)});};
+  const hasHook=D.hook!==false&&(dp==null||dp>2.4);
+  let hookEnd=0;if(hasHook){const k=gi(S.hook*.75);if(k<g.length&&g[k]<Math.min(1.9,dp!=null?dp-1:T))hookEnd=g[k];}
+  const di=dp!=null?gi(dp):g.length;
+  let outroT=null;if(T-(dp!=null?dp:0)>5){const k=gi(T-S.outro);if(k<g.length&&g[k]>(dp!=null?dp:0)+2)outroT=g[k];}
+  if(hookEnd)add(hookEnd,'build',S.fast?'flash':'zoomblur');
+  if(dp!=null){
+    const rampN=S.fast?2:4,rStart=Math.max(gi(hookEnd)+1,di-rampN),n=nb(S.build);
+    for(let k=gi(hookEnd)+n;k<rStart;k+=n)add(g[k],'build');
+    if(di-rampN>gi(hookEnd))add(g[di-rampN],'ramp');
+    if(rampN>=4&&di-2>gi(hookEnd))add(g[di-2],'ramp');
+    if(di-1>gi(hookEnd))add(g[di-1],'ramp','whip');
+    if(S.fast&&di>=1&&dp-g[di-1]>.25)add((g[di-1]+dp)/2,'ramp');
+    add(dp,'drop',S.dropTr||'none');
+    const nd=nb(S.drop);let k=di,cnt=0;
+    while(true){k+=(!S.fast&&cnt%4===3)||(S.fast&&cnt%8===7)?nd*2:nd;if(k>=g.length)break;const t=g[k];if(outroT!=null&&t>=outroT-.1)break;add(t,'drop');cnt++;}
+    if(outroT!=null)add(outroT,'outro','blur');
+  }else{const n=nb((S.build+S.drop)/2);for(let k=gi(hookEnd)+n;k<g.length;k+=n)add(g[k],'drop');}
+  // Übergänge: nur am Phrasen-Anfang, sonst harter Cut mit Impact
+  const ph=S.phrase;let tb=0,td=0;
+  cuts.forEach(c=>{if(c.tr!=null)return;const rel=c.gi-di;
+    if(c.sec==='build'){c.tr=S.trB[tb++%S.trB.length];}
+    else if(c.sec==='drop'){c.tr=(((rel%ph)+ph)%ph===0)?S.trD[td++%S.trD.length]:'none';}
+    else c.tr='none';});
+  // Akzent-Beats (Phrasen-Anfang) für Blitze
+  const acc=new Set();const dI=dp!=null?state.eb.findIndex(b=>b>=dp-.05):0;state.eb.forEach((b,i)=>{const r=i-dI;if(((r%ph)+ph)%ph===0||(S.fast&&((r%2)+2)%2===0&&b>=(dp||0)))acc.add(i);});state._acc=acc;
+  // Clips zuordnen: Action auf den Drop, ruhige Shots ins Build-up, bester Clip als Hook und auf den Drop
+  const mo=clipMoments();if(!mo.length)return[];
+  const heroCi=Math.max(0,state.clips.findIndex(c=>c.id===D.heroId));
+  const bounds=[0].concat(cuts.map(c=>c.t),[T]),secs=[hasHook&&hookEnd?'hook':(dp!=null?'build':'drop')].concat(cuts.map(c=>c.sec)),trs=[null].concat(cuts.map(c=>c.tr));
+  const segs=[];let prev=null,prev2=null,prev3=null,dropFirst=true;const cUse=new Map();
+  for(let k=0;k<bounds.length-1;k++){
+    const st=bounds[k],en=bounds[k+1],len=en-st,sec=secs[k],need=len*1.25+.1;let best=null,bs=-1e9;
+    for(const o of mo){
+      const fits=o.m.kind!=='video'||o.t+need<=o.m.dur-.05||o.m.dur<need+.3;
+      let s=(sec==='drop'||sec==='ramp'||sec==='hook')?o.r:(.35+.65*(1-o.r));
+      if(sec==='outro')s=.5+.5*o.r;
+      if(!fits)s-=.6;if(o.br<.07)s-=1.2;
+      s-=o.used*.55+(cUse.get(o.c)||0)*.22;if(prev&&o.c===prev)s-=1.4;if(prev2&&o.c===prev2)s-=.45;if(prev3&&o.c===prev3)s-=.2;
+      if(o.ci===heroCi&&(sec==='hook'||(sec==='drop'&&dropFirst)))s+=1.2;
+      s-=o.ci*.004;
+      if(s>bs){bs=s;best=o;}}
+    if(sec==='drop')dropFirst=false;
+    const o=best;let src=o.t+(o.used?Math.min(.6,o.used*.35):0);if(o.m.kind==='video'&&o.m.dur)src=Math.max(0,Math.min(src,o.m.dur-Math.min(o.m.dur*.9,need)));
+    o.used++;cUse.set(o.c,(cUse.get(o.c)||0)+1);
+    const dir=(sec==='build'||sec==='outro')?((Math.floor(k/2)%2)?1:-1):((Math.floor((cuts[k-1]?cuts[k-1].gi-di:0)/(ph*2))%2)?1:-1);
+    segs.push({start:st,end:en,clip:o.c,src,k,sec,tr:trs[k],dir,en:SEC_EN[sec]??1,trs:S.trs});
+    prev3=prev2;prev2=prev;prev=o.c;
+  }
+  return segs;
+}
+const once=(el,ev,ms)=>new Promise(r=>{let d=false;const f=()=>{if(!d){d=true;r();}};el.addEventListener(ev,f,{once:true});setTimeout(f,ms);});
+async function seekTo(v,t){if(v.readyState<1)await once(v,'loadedmetadata',5000);if(Math.abs(v.currentTime-t)<.004&&v.readyState>=2)return;try{v.currentTime=t;}catch(e){return;}await once(v,'seeked',2500);if(v.readyState<2)await once(v,'loadeddata',1500);}
+/* Die KI schaut sich jeden Clip an: Wo ist viel Bewegung (Action), wo ist es ruhig, wo ist das Bild schwarz? */
+async function analyzeClips(onp){
+  const real=state.clips.filter(c=>!c.demo);
+  const vids=real.filter(c=>{const m=media.get(c.mid);return m&&m.kind==='video'&&m.dur>0&&!c.an;});
+  const K=clamp(Math.floor(72/Math.max(1,vids.length)),3,6);
+  const cnv=document.createElement('canvas');cnv.width=36;cnv.height=64;const x=cnv.getContext('2d',{willReadFrequently:true});
+  for(let n=0;n<vids.length;n++){const c=vids[n],m=media.get(c.mid);if(onp)onp(n+1,vids.length);vidAttach(m);const v=m.el;v.pause();
+    const grab=()=>{try{x.drawImage(v,0,0,36,64);return x.getImageData(0,0,36,64).data;}catch(e){return null;}};
+    const span=Math.max(.3,m.dur-c.in-.35),out=[];
+    for(let k=0;k<K;k++){const t0=c.in+(k+.15)*span/K;
+      await seekTo(v,t0);const a=grab();await seekTo(v,Math.min(m.dur-.05,t0+.2));const b=grab();
+      let mo=.5,br=.5;if(a&&b){let d=0,s=0;for(let i=0;i<a.length;i+=4){const ga=a[i]+a[i+1]+a[i+2],gb=b[i]+b[i+1]+b[i+2];d+=Math.abs(ga-gb);s+=gb;}const np=a.length/4;mo=d/np/765;br=s/np/765;}
+      out.push({t:+t0.toFixed(2),mo,br:+br.toFixed(3)});}
+    c.an=out;}
+  const all=real.flatMap(c=>c.an||[]);const so=all.map(o=>o.mo).sort((a,b)=>a-b);
+  all.forEach(o=>{o.r=so.length>1?+(so.indexOf(o.mo)/(so.length-1)).toFixed(3):.5;});
+  activeSeg=null;dirty=true;
+}
+function bestClipId(){let b=null,bs=-1;state.clips.forEach(c=>{if(c.demo)return;const s=c.an&&c.an.length?Math.max(...c.an.map(o=>(o.r??.5)*(o.br<.07?0:1))):.3;if(s>bs){bs=s;b=c.id;}});return b;}
 function segAt(t){const s=state.segs;if(!s.length)return null;for(let i=0;i<s.length;i++)if(t<s[i].end)return s[i];return s[s.length-1];}
 const ss=(a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t);};
 function rateAt(t){
   const f=state.fx;if(f.curve==='off')return 1;const eb=state.eb,i=lastIdx(eb,t);
-  if(i<0||i>=eb.length-1)return 1;const p=(t-eb[i])/(eb[i+1]-eb[i]),a=f.velAmt;
+  if(i<0||i>=eb.length-1)return 1;const sg=state.dir?segAt(t):null;const p=(t-eb[i])/(eb[i+1]-eb[i]),a=f.velAmt*(sg&&sg.en!=null?Math.min(1,.3+sg.en*.8):1);
   const lo=1-.7*a,hi=1+1.8*a;
   if(f.curve==='velocity')return lo+(hi-lo)*ss(.2,.85,p);
   if(f.curve==='hero')return lo+(hi-lo)*Math.pow(Math.abs(2*p-1),1.5);
@@ -837,20 +959,23 @@ function dropAt(t){const d=state.dropEdit;if(!state.fx.dropMode||d==null)return{
 function fxAt(t){
   const f=state.fx,M=f.master,eb=state.eb,i=lastIdx(eb,t);let e=0,dt=9,h1=0,h2=0;
   if(i>=0){dt=t-eb[i];e=Math.exp(-dt*(4+f.hard*14));h1=hash(i);h2=hash(i*3.1+7);}
-  const AF=(state.mode==='manual'&&!state.autoFx)?0:1;const D0=dropAt(t),D={I:D0.I,b:D0.b*AF},E=e*D.I*M*AF;
+  const AF=(state.mode==='manual'&&!state.autoFx)?0:1;const D0=dropAt(t),D={I:D0.I,b:D0.b*AF};
+  const seg=segAt(t),dOn=!!(seg&&seg.sec),SE=dOn?seg.en:1,ACC=(dOn&&state._acc)?(state._acc.has(i)?1:.3):1,DS=dOn?(DSTY[state.dir.style]||DSTY.flow):null;if(dOn)D.I=1;
+  const E=e*D.I*M*AF*SE*(ACC<1?.7:1);
   let eF=e;if(f.snareFlash&&state.es.length){const j=lastIdx(state.es,t);eF=j>=0?Math.exp(-(t-state.es[j])*(6+f.hard*14)):0;}
-  const EF=eF*D.I*M*AF;
+  const EF=eF*D.I*M*AF*SE*(dOn?ACC*(.3+DS.flashAcc):1);
   const sa=f.shake*.06*E+D.b*.03*M;
   let ox=sa*Math.sin(dt*52+h1*6.28),oy=sa*Math.cos(dt*47+h2*6.28);
   let rot=f.shake*.05*E*Math.sin(dt*38+h2*6.28);
-  if(f.drift){ox+=f.drift*.03*Math.sin(t*.55)+f.drift*.012*Math.sin(t*1.3);oy+=f.drift*.022*Math.sin(t*.43+1.2);rot+=f.drift*.018*Math.sin(t*.37);}
+  const drf=f.drift*(dOn&&seg.sec==='drop'?.3:1);if(drf){const fd=f.drift;f.drift=drf;ox+=f.drift*.03*Math.sin(t*.55)+f.drift*.012*Math.sin(t*1.3);oy+=f.drift*.022*Math.sin(t*.43+1.2);rot+=f.drift*.018*Math.sin(t*.37);f.drift=fd;}
   let smear=0,splitT=1,tinv=0,ink=0;
   let scale=1.04+f.zoom*E+D.b*.25*M+(f.drift?f.drift*.04*(1+Math.sin(t*.31)):0),flash=f.flash*Math.pow(EF,2.5)+(D.b>0?.9*M*Math.exp(-(t-state.dropEdit)*7):0);
   let rgb=f.rgb*(.022*EF+.0015)+D.b*.02*M,ry=f.swing3d*.5*E*(i%2?1:-1),rx=f.swing3d*.16*E*Math.sin(h1*6.28),pix=f.pixBeat*(dt<.09?1:0)*D.I*M;
-  const seg=segAt(t);
-  const man=state.mode==='manual';let tty=man&&seg?(seg.clip.trans||'none'):f.transition;
-  if(seg&&seg.k>0&&tty!=='none'&&(man||f.trans>0)){
-    const d=t-seg.start,s=man?Math.max(.6,f.trans):f.trans,dir=seg.k%2?1:-1;let ty=tty;if(ty==='mix')ty=MIXT[Math.floor(hash(seg.k*7.7)*MIXT.length)%MIXT.length];
+  if(DS&&DS.bop)scale+=.07*DS.bop*e*M;
+  const man=state.mode==='manual';let tty=man&&seg?(seg.clip.trans||'none'):(dOn&&seg.tr!=null?seg.tr:f.transition);
+  if(dOn&&seg.k>0&&tty==='none'&&(seg.sec==='drop'||seg.sec==='ramp')){const d=t-seg.start;scale+=.09*M*Math.exp(-d*11);const a2=.012*M*(DS.shake||0)*Math.exp(-d*9);ox+=a2*Math.sin(d*60+seg.k);oy+=a2*Math.cos(d*53+seg.k);}
+  if(seg&&seg.k>0&&tty!=='none'&&(man||f.trans>0||dOn)){
+    const d=t-seg.start,s=man?Math.max(.6,f.trans):(dOn?seg.trs:f.trans),dir=dOn?seg.dir:(seg.k%2?1:-1);let ty=tty;if(ty==='mix')ty=MIXT[Math.floor(hash(seg.k*7.7)*MIXT.length)%MIXT.length];
     const x=Math.exp(-d*12);
     if(ty==='swipe')ox+=dir*s*.9*Math.exp(-d*13);
     else if(ty==='whip')oy+=dir*s*.9*Math.exp(-d*13);
@@ -877,7 +1002,7 @@ function fxAt(t){
 let activeSeg=null;
 function wrapT(c,m,x){if(m.kind!=='video'||!m.dur)return 0;const span=Math.max(.5,m.dur-c.in-.1);if(x>m.dur-.1)x=c.in+((x-c.in)%span);return clamp(x,0,m.dur-.05);}
 function syncVideo(t,force){
-  const seg=segAt(t);if(!seg)return null;const m=media.get(seg.clip.mid);
+  const seg=segAt(t);if(!seg)return null;if(OFF){activeSeg=seg;return seg;}const m=media.get(seg.clip.mid);
   if(seg!==activeSeg||force){
     if(activeSeg&&activeSeg.clip!==seg.clip){const om=media.get(activeSeg.clip.mid);if(om&&om.kind==='video')om.el.pause();}
     activeSeg=seg;
@@ -1000,7 +1125,7 @@ function rasterShape(L){
 }
 /* media layer sync */
 function syncLayerMedia(L,t,force){
-  const m=media.get(L.mid);if(!m||m.kind!=='video')return;const v=m.el,active=t>=L.start&&t<L.end&&L.visible;
+  if(OFF)return;const m=media.get(L.mid);if(!m||m.kind!=='video')return;const v=m.el,active=t>=L.start&&t<L.end&&L.visible;
   if(active)vidAttach(m);
   if(!active){if(!v.paused&&!state.clips.some(c=>c.mid===L.mid))v.pause();return;}
   const tgt=clamp((L.in||0)+(t-L.start)*(L.speed||1),0,Math.max(0,m.dur-.05));
@@ -1030,7 +1155,7 @@ function prepLayer(L,t,A){
   return true;
 }
 function drawLayers(t,A){
-  const tm=(performance.now()-rT0)/1000;let any=false;
+  const tm=nowT();let any=false;
   for(const L of state.layers){
     if(!L.visible||t<L.start||t>=L.end||L.type==='sfx')continue;
     if(L.type==='media')syncLayerMedia(L,t,false);
@@ -1064,10 +1189,10 @@ function draw(t){
   const A=fxAt(t),shT=f.blur*.05+A.smear*.14,B=shT>0?fxAt(Math.max(0,t-shT)):A;lastA=A;
   let kA=0,kB=0;if(seg&&media.get(seg.clip.mid).kind==='image'){const L=Math.max(.1,seg.end-seg.start);kA=.06*(t-seg.start)/L;kB=.06*Math.max(0,t-shT-seg.start)/L;}
   const bScale=(B.scale+kB)*(1-clamp(A.zb,0,1.5)*.12);
-  const rate=(seg&&media.get(seg.clip.mid).kind==='video'&&state.playing)?rateAt(t):1;
+  const rate=(seg&&media.get(seg.clip.mid).kind==='video'&&(state.playing||OFF))?rateAt(t):1;
   const trail=Math.max(f.echo*.78,f.blur*.6*clamp((rate-1.15)/1.2,0,1));
   const lid=(lk.preId&&state.dropEdit!=null&&t<state.dropEdit)?lk.preId:lk.id;
-  const dst=W/H,sa=srcDims[0]/srcDims[1],LK=LOOKS[lid]||LOOKS.natur,tm=(performance.now()-rT0)/1000;
+  const dst=W/H,sa=srcDims[0]/srcDims[1],LK=LOOKS[lid]||LOOKS.natur,tm=nowT();
   glPhase='szene';gl.bindFramebuffer(gl.FRAMEBUFFER,fbs[cur]);gl.viewport(0,0,W,H);gl.useProgram(P1.p);const u=P1.u;
   gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,srcTex);gl.uniform1i(u.uSrc,0);
   gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,fbt[1-cur]);gl.uniform1i(u.uPrev,1);
@@ -1111,7 +1236,7 @@ function draw2D(t){
     if(m.kind==='video'){const q=f.fpsLook?Math.floor(t*f.fpsLook):-2;if(q===-2||q!==lastQ||lastUp!==m){const s2=frameOf(m);if(s2){prev2={src:s2,w:s2.width,h:s2.height};lastUp=m;lastQ=q;}}}
     else if(lastUp!==m){prev2={src:m.el,w:m.w,h:m.h};lastUp=m;}}
   const A=fxAt(t);lastA=A;const shT=f.blur*.05+A.smear*.14,B=shT>.004?fxAt(Math.max(0,t-shT)):null;
-  const rate=(seg&&media.get(seg.clip.mid).kind==='video'&&state.playing)?rateAt(t):1;
+  const rate=(seg&&media.get(seg.clip.mid).kind==='video'&&(state.playing||OFF))?rateAt(t):1;
   const trail=Math.max(f.echo*.78,f.blur*.6*clamp((rate-1.15)/1.2,0,1));
   const lid=(lk.preId&&state.dropEdit!=null&&t<state.dropEdit)?lk.preId:lk.id,LK=LOOKS[lid]||LOOKS.natur;
   x.setTransform(1,0,0,1,0,0);x.globalCompositeOperation='source-over';x.globalAlpha=1;x.imageSmoothingEnabled=true;
@@ -1234,6 +1359,7 @@ function loop(){
   try{loopBody();}catch(e){if(!frameErr){frameErr=true;console.error(e);showGlError('Fehler beim Zeichnen: '+(e&&e.message||e));}}
 }
 function loopBody(){
+  if(OFF)return;
   if(!R2D&&(glLost||!P1))return;
   if(glFrames<90){glFrames++;if(glFrames===90)LS.del('sakuga.glstep');}
   if(state.playing){
@@ -1261,7 +1387,7 @@ function drawTL(){
   state.layers.forEach(L=>{if(L.type!=='text')return;chipRect(c,X(L.start),R.text,X(L.end)-X(L.start)-1,TRK.text,'#6a35d6',(L.text||'Text').replace(/[*~]/g,'').slice(0,40));});
   // fx track: transitions, glow/flare, sfx
   const f=state.fx,man=state.mode==='manual';
-  state.segs.forEach(sg=>{if(sg.k<1)return;let ty=man?(sg.clip.trans||'none'):f.transition;if(ty==='mix')ty=MIXT[Math.floor(hash(sg.k*7.7)*MIXT.length)%MIXT.length];if(ty==='none'||(!man&&f.trans<=0))return;const x=X(sg.start);chipRect(c,x-2,R.fx,Math.max(10,X(.35)),TRK.fx,'#b02fc4',shortTrans(ty));});
+  state.segs.forEach(sg=>{if(sg.k<1)return;let ty=man?(sg.clip.trans||'none'):(sg.tr!=null?sg.tr:f.transition);if(ty==='mix')ty=MIXT[Math.floor(hash(sg.k*7.7)*MIXT.length)%MIXT.length];if(ty==='none'||(!man&&f.trans<=0&&sg.tr==null))return;const x=X(sg.start);chipRect(c,x-2,R.fx,Math.max(10,X(.35)),TRK.fx,'#b02fc4',shortTrans(ty));});
   state.layers.forEach(L=>{if(L.type==='sfx'||(L.type==='shape'&&(L.shape==='glow'||L.shape==='flare'||L.shape==='burst'))){chipRect(c,X(L.start),R.fx+TRK.fx*.5,X(L.end)-X(L.start),TRK.fx*.5,L.type==='sfx'?'#1f7a5e':'#c98a1a','');}});
   // look track
   const lk=state.look,dp=state.dropEdit;
@@ -1385,7 +1511,8 @@ function placeAtDrop(){
 
 /* ================= Sakuga-Sounds (synthesized, copyright-free) ================= */
 const LIB=[
-  {id:'phonk',name:'Phonk Drift',bpm:130,desc:'Cowbell, 808, harter Drop',dur:26,drop:32},
+  {id:'phonk',name:'Phonk Drift',bpm:140,desc:'Verzerrte Cowbell-Melodie, 808-Slides, harter Drop',dur:24,drop:16},
+  {id:'brphonk',name:'Brazil Phonk',bpm:130,desc:'Tamborzão-Kicks, verzerrte Cowbell, 808 (TikTok-Edit-Sound)',dur:24,drop:16},
   {id:'trap',name:'Hype Trap',bpm:145,desc:'Hi-Hat-Rolls, tiefe 808',dur:24,drop:32},
   {id:'edm',name:'EDM Drop',bpm:128,desc:'Build-up, Riser, Four-on-the-floor',dur:26,drop:32},
   {id:'jrock',name:'Anime Rush',bpm:172,desc:'Schnelle Drums, Opening-Energie',dur:22,drop:32},
@@ -1408,14 +1535,32 @@ async function synthTrack(def){
   const b808=(t,f,d,v,slideTo)=>{const o=off.createOscillator(),g=off.createGain(),ws=off.createWaveShaper();const cu=new Float32Array(256);for(let i=0;i<256;i++){const x=i/128-1;cu[i]=Math.tanh(x*2.5);}ws.curve=cu;o.type='sine';o.frequency.setValueAtTime(f,t);if(slideTo)o.frequency.exponentialRampToValueAtTime(slideTo,t+Math.min(d,.25));g.gain.setValueAtTime(v,t);g.gain.setValueAtTime(v,t+d*.7);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(ws);ws.connect(g);g.connect(m);o.start(t);o.stop(t+d+.05);};
   const chord=(t,fs,d,v,type='sawtooth',lp=1800)=>fs.forEach(f=>[f*.997,f*1.003].forEach(x=>tone(t,x,d,v/fs.length,type,lp)));
   const riser=(t0,t1,v)=>{const s=off.createBufferSource();s.buffer=nb;s.loop=true;const f=off.createBiquadFilter();f.type='bandpass';f.Q.value=3;f.frequency.setValueAtTime(300,t0);f.frequency.exponentialRampToValueAtTime(9000,t1);const g=off.createGain();g.gain.setValueAtTime(.0001,t0);g.gain.exponentialRampToValueAtTime(v,t1-.02);g.gain.linearRampToValueAtTime(0,t1);s.connect(f);f.connect(g);g.connect(m);s.start(t0);s.stop(t1+.05);};
+  // Phonk-Bausteine: verzerrte 808-Cowbell (Phrygisch), verzerrte 808 mit Slides
+  const dist=k=>{const ws=off.createWaveShaper(),cu=new Float32Array(1024);for(let i=0;i<1024;i++){const x=i/512-1;cu[i]=Math.tanh(x*k)/Math.tanh(k);}ws.curve=cu;return ws;};
+  const cbBus=off.createGain();cbBus.gain.value=.55;{const d=dist(3.2),hp=off.createBiquadFilter();hp.type='highpass';hp.frequency.value=380;cbBus.connect(d);d.connect(hp);hp.connect(m);}
+  const cow=(t,f,v,d=.2)=>{const g=off.createGain(),bp=off.createBiquadFilter();bp.type='bandpass';bp.frequency.value=f*1.55;bp.Q.value=.9;[f,f*1.48].forEach(x=>{const o=off.createOscillator();o.type='square';o.frequency.value=x;o.connect(bp);o.start(t);o.stop(t+d+.05);});env(g,t,.002,d,v);bp.connect(g);g.connect(cbBus);};
+  const PHR=[0,1,3,5,7,8,10],ph=(root,deg)=>root*Math.pow(2,(PHR[((deg%7)+7)%7]+12*Math.floor(deg/7))/12);
+  const bass=off.createGain();bass.gain.value=.9;{const d=dist(4),lp=off.createBiquadFilter();lp.type='lowpass';lp.frequency.value=900;bass.connect(d);d.connect(lp);lp.connect(m);}
+  const b808d=(t,f,d,v,slideTo)=>{const o=off.createOscillator(),g=off.createGain();o.type='sine';o.frequency.setValueAtTime(f*2.2,t);o.frequency.exponentialRampToValueAtTime(f,t+.03);if(slideTo){o.frequency.setValueAtTime(f,t+d*.55);o.frequency.exponentialRampToValueAtTime(slideTo,t+d*.85);}g.gain.setValueAtTime(v,t);g.gain.setValueAtTime(v*.85,t+d*.8);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(bass);o.start(t);o.stop(t+d+.05);};
+  const clap=(t,v)=>{for(let k=0;k<3;k++)noise(t+k*.011,1100,v*(k===2?1:.6),k===2?.16:.02,5200);};
+  const chop=(t,v,f=700)=>{const s2=off.createBufferSource();s2.buffer=nb;const a=off.createBiquadFilter(),b=off.createBiquadFilter();a.type='bandpass';a.frequency.setValueAtTime(f,t);a.frequency.linearRampToValueAtTime(f*1.6,t+.12);a.Q.value=6;b.type='bandpass';b.frequency.value=f*2.4;b.Q.value=8;const g=off.createGain();env(g,t,.01,.22,v);s2.connect(a);s2.connect(b);a.connect(g);b.connect(g);const d=dist(5);g.connect(d);d.connect(m);s2.start(t,.1);s2.stop(t+.3);};
   const N=Math.floor(dur/spb),D=def.drop,id=def.id;
   const scale=[0,3,5,7,10],note=(root,deg,oct=0)=>root*Math.pow(2,(scale[((deg%5)+5)%5]+12*(Math.floor(deg/5)+oct))/12);
   if(D*spb<dur)riser(Math.max(0,(D-8)*spb),D*spb,.35);
   for(let b=0;b<N;b++){const t=b*spb,pre=b<D,build=b>=D-8&&pre,bar=Math.floor(b/4),q=b%4;
-    if(id==='phonk'){const root=55;
-      if(pre){if(q===0)kick(t,.5);hat(t,.05);if(build){for(let k=0;k<(b>=D-4?4:2);k++)snare(t+k*spb/(b>=D-4?4:2),.15+.03*(b-D+8));}}
-      else{kick(t,1);if(q===2)snare(t,.5);hat(t,.08);hat(t+spb/2,.06);if(q===0)b808(t,root*(bar%2?1.19:1),spb*2,.55,null);}
-      const mel=[0,2,3,2,0,1,2,4];for(let k=0;k<2;k++){const d=mel[(b*2+k)%8];bell(t+k*spb/2,note(440,d),pre?.035:.06);}
+    if(id==='phonk'){const s16=spb/4,root=587,bar2=Math.floor(b/8)%2;
+      const pat=[0,null,0,null,1,null,0,null,3,null,1,null,0,null,1,null,0,null,0,null,1,null,3,null,4,null,3,null,1,null,-1,null];
+      for(let k=0;k<4;k++){const st=(b%8)*4+k,dg=pat[st];if(dg!=null)cow(t+k*s16,ph(root,dg),pre?.16:.32,.18);}
+      if(pre){hat(t+spb/2,.04);if(b>=D-8)kick(t,.5);if(b>=D-4){const n=b>=D-2?4:2;for(let k=0;k<n;k++)clap(t+k*spb/n,.12+.05*(b-D+4));}}
+      else{kick(t,1,170,40,.3);if(q===1||q===3)clap(t,.42);for(let k=0;k<4;k++)hat(t+k*s16,k%2?.05:.08);if(b%8===7)for(let k=0;k<3;k++)hat(t+spb/2+k*s16/1.5,.07);
+        if(q===0){const r=[36.7,36.7,43.65,41.2][bar%4];b808d(t,r,spb*3.6,.75,bar%4===3?r*.75:(bar%2?r*1.19:null));}}
+    }else if(id==='brphonk'){const s16=spb/4,root=659;
+      const kp=[1,0,0,1,0,0,1,0,0,0,1,0,1,0,0,0],cp=[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],step0=(b%4)*4;
+      const mel=[0,0,null,1,0,null,3,1,0,0,null,1,4,3,1,null];
+      for(let k=0;k<4;k++){const st=step0+k,tt=t+k*s16+(k%2?s16*.12:0);const dg=mel[(st+(Math.floor(b/4)%2)*4)%16];if(dg!=null)cow(tt,ph(root,dg),pre?.2:.3,.14);
+        if(pre){if(b>=4&&kp[st])kick(tt,.45,150,45,.2);if(cp[st]&&b>=8)clap(tt,.25);if(b>=D-2)hat(tt,.08);}
+        else{if(kp[st]){kick(tt,1,160,38,.28);b808d(tt,[41.2,41.2,49,46.25][bar%4],kp[st+3]?s16*2.6:s16*3.6,.7,st===12&&bar%2?38:null);}if(cp[st])clap(tt,.5);hat(tt,k%2?.045:.075);}}
+      if(!pre&&q===0&&bar%2===0)chop(t+spb*1.5,.18,620+(bar%4)*80);
     }else if(id==='trap'){const root=49;
       if(pre){if(q===0)kick(t,.45);hat(t,.05);if(build)for(let k=0;k<4;k++)hat(t+k*spb/4,.07);}
       else{if(q===0||(q===2&&bar%2))kick(t,1);if(q===2)snare(t,.55);const roll=(b%8===7)?6:2;for(let k=0;k<roll;k++)hat(t+k*spb/roll,.07);if(q===0)b808(t,root*(bar%4===3?1.33:1),spb*3,.6,bar%2?root*.75:null);}
@@ -1479,7 +1624,7 @@ const WHOOSHT=new Set(['swipe','whip','zoom','spin','flip','blur','zoomblur','sp
 function sfxEvents(){
   const ev=[],f=state.fx,man=state.mode==='manual';
   if(f.sfx>0&&(!man||state.autoFx)){
-    state.segs.forEach(sg=>{if(sg.k<1)return;let ty=man?(sg.clip.trans||'none'):f.transition;if(ty==='mix')ty=MIXT[Math.floor(hash(sg.k*7.7)*MIXT.length)%MIXT.length];if(ty==='none'||(!man&&f.trans<=0))return;if(WHOOSHT.has(ty))ev.push({t:sg.start-.22,n:'whoosh',g:f.sfx*.8});else if(HITT.has(ty))ev.push({t:sg.start,n:'hit',g:f.sfx*.7});});
+    state.segs.forEach(sg=>{if(sg.k<1)return;let ty=man?(sg.clip.trans||'none'):(sg.tr!=null?sg.tr:f.transition);if(ty==='mix')ty=MIXT[Math.floor(hash(sg.k*7.7)*MIXT.length)%MIXT.length];if(ty==='none'||(!man&&f.trans<=0&&sg.tr==null))return;if(WHOOSHT.has(ty))ev.push({t:sg.start-.22,n:'whoosh',g:f.sfx*.8});else if(HITT.has(ty))ev.push({t:sg.start,n:'hit',g:f.sfx*.7});});
     if(state.dropEdit!=null){ev.push({t:state.dropEdit-2.95,n:'riser',g:f.sfx*.8});ev.push({t:state.dropEdit,n:'impact',g:f.sfx});}
   }
   state.layers.forEach(L=>{if(L.type==='sfx'&&L.visible)ev.push({t:L.start,n:L.sfx,g:L.vol??1});});
@@ -1625,16 +1770,16 @@ function syncBinds(){binds.forEach(f=>f());}
 const FX=()=>state.fx,LK=()=>state.look;
 const manual=()=>{state.preset=null;state.done.style=true;updSteps();};
 function applyPreset(id){
-  const p=PRESETS[id];if(!p)return;state.preset=id;Object.assign(state.fx,FX0,{master:state.fx.master,dropMode:state.fx.dropMode,snareFlash:state.fx.snareFlash},p.fx);Object.assign(state.look,LOOK0,{contrast:state.look.contrast,sat:state.look.sat,vignette:state.look.vignette,grain:state.look.grain,bars:state.look.bars},p.look);
+  const p=PRESETS[id];if(!p)return;state.preset=id;state.dir=null;Object.assign(state.fx,FX0,{master:state.fx.master,dropMode:state.fx.dropMode,snareFlash:state.fx.snareFlash},p.fx);Object.assign(state.look,LOOK0,{contrast:state.look.contrast,sat:state.look.sat,vignette:state.look.vignette,grain:state.look.grain,bars:state.look.bars},p.look);
   state.done.style=true;refresh();syncBinds();
 }
 chips($('#presetChips'),Object.keys(PRESETS).map(k=>({id:k,label:PRESETS[k].label})),()=>state.preset,id=>applyPreset(id));
 slider($('#masterBox'),{tgt:FX,key:'master',id:'master',label:'Intensität',max:1.5,cls:'master',on:()=>{state.done.style=true;updSteps();}});
-chips($('#transChips'),TRANS,()=>state.fx.transition,id=>{state.fx.transition=id;manual();});
+chips($('#transChips'),TRANS,()=>state.fx.transition,id=>{state.fx.transition=id;if(state.dir){state.dir=null;refresh();}manual();});
 slider($('#transSlider'),{tgt:FX,key:'trans',label:'Stärke',on:manual});
 chips($('#curveChips'),CURVES,()=>state.fx.curve,id=>{state.fx.curve=id;manual();refresh();});
 slider($('#curveSlider'),{tgt:FX,key:'velAmt',label:'Stärke',on:manual});
-chips($('#cutSeg'),[1,2,4,8].map(n=>({id:String(n),label:n===1?'1 Beat':n+' Beats'})),()=>state.fx.cutEvery,id=>{state.fx.cutEvery=+id;manual();refresh();},'');
+chips($('#cutSeg'),[1,2,4,8].map(n=>({id:String(n),label:n===1?'1 Beat':n+' Beats'})),()=>state.fx.cutEvery,id=>{state.fx.cutEvery=+id;state.dir=null;manual();refresh();},'');
 toggle($('#dropSw'),()=>state.fx.dropMode,v=>{state.fx.dropMode=v;refresh();});
 slider($('#sfxBox'),{tgt:FX,key:'sfx',id:'sfx',label:'Sound-Effekte',on:()=>{manual();if(state.fx.sfx>0)buildSfx();},change:()=>{if(state.playing){pause();play();}}});
 const fxs=$('#fxSliders');
@@ -1822,7 +1967,7 @@ async function saveProject(){
   let thumb='';try{const tcv=document.createElement('canvas');tcv.width=118;tcv.height=210;tcv.getContext('2d').drawImage(cv,0,0,118,210);thumb=tcv.toDataURL('image/jpeg',.6);}catch(e){}
   const data={v:3,id:state.project.id,name:state.project.name,created:state.project.created,updated:Date.now(),thumb,
     songStart:state.songStart,length:state.length,sens:state.sens,fx:state.fx,look:state.look,preset:state.preset,
-    clips:state.clips.filter(c=>!c.demo).map(c=>({id:c.id,mid:c.mid,in:c.in,speed:c.speed})),media:mediaList,
+    clips:state.clips.filter(c=>!c.demo).map(c=>({id:c.id,mid:c.mid,in:c.in,speed:c.speed,an:c.an||null})),dir:state.dir||null,media:mediaList,
     music:state.music&&!state.music.demo?(state.music.lib?{lib:state.music.lib,name:state.music.name}:{blob:state.music.blob,name:state.music.name,credit:state.music.credit||''}):null,
     mode:state.mode,autoFx:state.autoFx,mclips:state.mclips.filter(c=>!c.demo),beats:state.beats,snares:state.snares,bpm:state.bpm,dropSong:state.dropSong,layers:JSON.parse(serialLayers()).filter(L=>!L.demo)};
   try{await idbOp('projects','readwrite',s=>s.put(data));}catch(e){changed=true;}
@@ -1845,7 +1990,7 @@ async function openProject(id){
   const midMap=new Map();
   for(const mm of p.media||[]){try{const blob=await idbOp('blobs','readonly',s=>s.get(mm.blob));if(!blob)continue;const file=new File([blob],mm.name,{type:blob.type||mm.type||''});const r=await loadMedia(file,mm.blob);if(!r.error){midMap.set(mm.mid,r.mid);savedBlobs.add(mm.blob);}}catch(e){}}
   state.clips=(p.clips||[]).filter(c=>midMap.has(c.mid)).map(c=>Object.assign({},c,{mid:midMap.get(c.mid)}));
-  Object.assign(state.fx,FX0,p.fx);Object.assign(state.look,LOOK0,p.look);state.preset=p.preset;state.length=p.length||15;state.sens=p.sens??.5;
+  Object.assign(state.fx,FX0,p.fx);Object.assign(state.look,LOOK0,p.look);state.preset=p.preset;state.dir=p.dir||null;state.length=p.length||15;state.sens=p.sens??.5;
   try{if(p.music){let buf=null,extra={};if(p.music.lib){const def=LIB.find(d=>d.id===p.music.lib);if(def){buf=await synthTrack(def);extra={lib:def.id};state.libId=def.id;}}else if(p.music.blob){const blob=await idbOp('blobs','readonly',s=>s.get(p.music.blob));if(blob){buf=await decode(ac(),await blob.arrayBuffer());extra={blob:p.music.blob};savedBlobs.add(p.music.blob);}}
     if(buf){await setMusic(buf,p.music.name,false,extra);}}}catch(e){}
   state.beats=p.beats||state.beats;state.snares=p.snares||state.snares;state.bpm=p.bpm||state.bpm;state.dropSong=p.dropSong??state.dropSong;state.songStart=p.songStart||0;
@@ -1914,7 +2059,82 @@ $('#exCancel').addEventListener('click',()=>{$('#exportSheet').hidden=true;});
 $('#exGo').addEventListener('click',startExport);
 $('#exStop').addEventListener('click',()=>finishExport(true));
 $('#exClose').addEventListener('click',()=>{$('#exportSheet').hidden=true;});
-function startExport(){
+/* ---- Export Bild für Bild (WebCodecs): ruckelfrei, volle Auflösung, egal wie schwer die Effekte sind ---- */
+function srcAt(seg,t){
+  const sp=seg.clip.speed||1;if(state.fx.curve==='off'||!state.eb.length)return seg.src+(t-seg.start)*sp;
+  if(seg._u==null||t<seg._u){seg._u=seg.start;seg._a=0;}
+  const h=1/240;let u=seg._u,a=seg._a;while(u<t-1e-9){const d=Math.min(h,t-u);a+=clamp(rateAt(u+d/2)*sp,.1,8)*d;u+=d;}
+  seg._u=u;seg._a=a;return seg.src+a;
+}
+async function offPrepare(t){
+  const jobs=[],seg=segAt(t);
+  if(seg){const m=media.get(seg.clip.mid);if(m&&m.kind==='video'){vidAttach(m);const fl=state.fx.fpsLook;const tq=fl?Math.max(seg.start,Math.floor(t*fl)/fl):t;jobs.push(seekTo(m.el,wrapT(seg.clip,m,srcAt(seg,tq))));}}
+  state.layers.forEach(L=>{if(L.type!=='media'||!L.visible||t<L.start||t>=L.end)return;const m=media.get(L.mid);if(!m||m.kind!=='video')return;vidAttach(m);
+    const tg=clamp((L.in||0)+(t-L.start)*(L.speed||1),0,Math.max(0,m.dur-.05));jobs.push(seekTo(m.el,m.dur?((tg%m.dur)+m.dur)%m.dur:tg));});
+  media.forEach(m=>{if(m.kind==='video'&&!m.el.paused)m.el.pause();});
+  await Promise.all(jobs);
+}
+async function renderMix(T){
+  const hasSfx=state.fx.sfx>0||state.layers.some(L=>L.type==='sfx');if(!state.music&&!hasSfx)return null;
+  if(hasSfx&&!SFX.ready)await buildSfx();
+  const sr=48000,OAC=window.OfflineAudioContext||window.webkitOfflineAudioContext,off=new OAC(2,Math.ceil(T*sr),sr);
+  if(state.music){const s=off.createBufferSource();s.buffer=state.music.buffer;s.connect(off.destination);s.start(0,state.songStart,T);}
+  if(SFX.ready)for(const e of sfxEvents()){const buf=SFX[e.n];if(!buf||e.t+buf.duration<0||e.t>T)continue;const s=off.createBufferSource();s.buffer=buf;const g=off.createGain();g.gain.value=e.g;s.connect(g);g.connect(off.destination);if(e.t>=0)s.start(e.t);else s.start(0,-e.t);}
+  return await renderOff(off);
+}
+async function pickVideoCfg(w,h,fps,br){
+  const c=[['avc1.640028','avc'],['avc1.4d0028','avc'],['avc1.42e028','avc'],['avc1.640032','avc'],['vp09.00.40.08','vp9']];
+  for(const [codec,mux] of c){const cfg={codec,width:w,height:h,bitrate:br,framerate:fps};if(mux==='avc')cfg.avc={format:'avc'};try{const r=await VideoEncoder.isConfigSupported(cfg);if(r&&r.supported)return{cfg,mux};}catch(e){}}
+  return null;
+}
+async function exportFrames(onp){
+  if(!window.VideoEncoder||!window.VideoFrame||!window.Mp4Muxer)return'nosupport';
+  const fps=state.fpsOut,T=total(),w=state.q,h=Math.round(w*16/9),br=(w>720?16e6:9e6)*(fps>30?1.4:1);
+  const vc=await pickVideoCfg(w,h,fps,br);if(!vc)return'nosupport';
+  const mix=await renderMix(T);
+  let acfg=null,amux='aac';if(mix){if(!window.AudioEncoder||!window.AudioData)return'noaudio';const cs=[['mp4a.40.2','aac']];if(/[?&]debug/.test(location.search))cs.push(['opus','opus']);for(const [codec,mx] of cs){const c={codec,sampleRate:mix.sampleRate,numberOfChannels:2,bitrate:192000};try{const r=await AudioEncoder.isConfigSupported(c);if(r&&r.supported){acfg=c;amux=mx;break;}}catch(e){}}if(!acfg)return'noaudio';}
+  const muxer=new Mp4Muxer.Muxer({target:new Mp4Muxer.ArrayBufferTarget(),video:{codec:vc.mux,width:w,height:h,frameRate:fps},audio:acfg?{codec:amux,numberOfChannels:2,sampleRate:mix.sampleRate}:undefined,fastStart:'in-memory',firstTimestampBehavior:'offset'});
+  let err=null;
+  if(acfg){const ae=new AudioEncoder({output:(ch,meta)=>muxer.addAudioChunk(ch,meta),error:e=>{err=e;}});ae.configure(acfg);
+    const sr=mix.sampleRate,N=mix.length,L=mix.getChannelData(0),R=mix.numberOfChannels>1?mix.getChannelData(1):L;
+    for(let o=0;o<N;o+=1024){const n=Math.min(1024,N-o),d=new Float32Array(n*2);d.set(L.subarray(o,o+n),0);d.set(R.subarray(o,o+n),n);
+      const ad=new AudioData({format:'f32-planar',sampleRate:sr,numberOfFrames:n,numberOfChannels:2,timestamp:Math.round(o/sr*1e6),data:d});ae.encode(ad);ad.close();}
+    await ae.flush();ae.close();if(err)throw err;}
+  const ve=new VideoEncoder({output:(ch,meta)=>muxer.addVideoChunk(ch,meta),error:e=>{err=e;}});ve.configure(vc.cfg);
+  OFF=true;pause();setRes(w);state.layers.forEach(L=>{L._key=null;});state.segs.forEach(sg=>{sg._u=null;});cur=0;lastUp=null;lastQ=-1;activeSeg=null;
+  const N=Math.max(1,Math.round(T*fps));
+  try{
+    for(let i=0;i<N;i++){
+      if(cancelled||err)break;const t=i/fps;state.t=t;
+      await offPrepare(t);draw(t);
+      const fr=new VideoFrame(cv,{timestamp:Math.round(i*1e6/fps),duration:Math.round(1e6/fps)});ve.encode(fr,{keyFrame:i%(fps*2)===0});fr.close();
+      while(ve.encodeQueueSize>4)await new Promise(r=>setTimeout(r,4));
+      if(onp&&i%3===0)onp(i/N);
+    }
+    if(!cancelled&&!err)await ve.flush();
+  }finally{try{ve.close();}catch(e){}OFF=false;}
+  if(err)throw err;if(cancelled)return'cancel';
+  muxer.finalize();return new Blob([muxer.target.buffer],{type:'video/mp4'});
+}
+function exShowDone(){
+  $('#exVideo').src=URL.createObjectURL(outBlob);showStep('exDone');state.done.export=true;updSteps();
+  $('#exHint').textContent=(outExt==='mp4'?'MP4, bereit für TikTok, Reels und Shorts. ':'WebM-Datei. TikTok nimmt sie meist an. ')+saveHint();
+  $('#exSave').textContent=(isNative||canWebShare)?'Teilen / In Fotos sichern':'Video speichern';$('#exSave').hidden=false;
+}
+async function startExport(){
+  if(state.exporting)return;
+  if(window.VideoEncoder&&window.Mp4Muxer){
+    cancelled=false;showStep('exRun');$('#exPct').textContent='0 %';$('#exBar').style.width='0%';
+    state.exporting=true;let r=null;
+    try{r=await exportFrames(p=>{const q=Math.round(p*100);$('#exPct').textContent=q+' %';$('#exBar').style.width=q+'%';});}catch(e){console.error(e);r='error';}
+    state.exporting=false;OFF=false;setRes(PREVW());state.t=0;seek(0);dirty=true;
+    if(r instanceof Blob){outBlob=r;outExt='mp4';exShowDone();return;}
+    if(r==='cancel'){showStep('exStart');$('#exportSheet').hidden=true;return;}
+    if(r==='error')toast('Bild-für-Bild-Export ging nicht, nehme den Echtzeit-Export',4000);
+  }
+  startExportRT();
+}
+function startExportRT(){
   if(!window.MediaRecorder||!cv.captureStream){toast('Dieser Browser kann keine Videos aufnehmen. Öffne die App in Safari oder Chrome.',5000);return;}
   const a=ac();setRes(state.q);
   const vs=cv.captureStream(state.fpsOut);recDest=a.createMediaStreamDestination();
@@ -1925,15 +2145,13 @@ function startExport(){
   try{rec=new MediaRecorder(stream,mime?{mimeType:mime,videoBitsPerSecond:br}:{});}catch(e){toast('Aufnahme konnte nicht starten.');setRes(PREVW());return;}
   chunks=[];cancelled=false;rec.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data);};
   rec.onstop=()=>{setRes(PREVW());if(cancelled){showStep('exStart');$('#exportSheet').hidden=true;return;}
-    const type=rec.mimeType||mime||'video/webm';outExt=type.includes('mp4')?'mp4':'webm';outBlob=new Blob(chunks,{type});
-    $('#exVideo').src=URL.createObjectURL(outBlob);showStep('exDone');state.done.export=true;updSteps();
-    $('#exHint').textContent=(outExt==='mp4'?'MP4, bereit für TikTok, Reels und Shorts. ':'WebM-Datei. TikTok nimmt sie meist an. ')+saveHint();
-    $('#exSave').textContent=(isNative||canWebShare)?'Teilen / In Fotos sichern':'Video speichern';$('#exSave').hidden=false;};
+    const type=rec.mimeType||mime||'video/webm';outExt=type.includes('mp4')?'mp4':'webm';outBlob=new Blob(chunks,{type});exShowDone();};
   showStep('exRun');$('#exPct').textContent='0 %';$('#exBar').style.width='0%';
   state.layers.forEach(L=>{L._key=null;});
   state.exporting=true;state.t=0;cur=0;rec.start(500);play();
 }
 function finishExport(cancel){
+  if(OFF){cancelled=cancel;return;}
   if(!state.exporting)return;cancelled=cancel;state.exporting=false;pause();
   setTimeout(()=>{try{rec&&rec.state!=='inactive'&&rec.stop();}catch(e){}recDest=null;},120);
   state.t=0;dirty=true;
@@ -2080,10 +2298,10 @@ function showCredit(){const c=state.music&&state.music.credit;$('#credBox').hidd
 function hideCredit(){$('#credBox').hidden=true;curSongId=null;}
 $('#credCopy').addEventListener('click',async()=>{const t=$('#credText').textContent;try{await navigator.clipboard.writeText(t);toast('Credit kopiert, einfach in die Beschreibung einfügen');}catch(e){const r=document.createRange();r.selectNodeContents($('#credText'));const sl=getSelection();sl.removeAllRanges();sl.addRange(r);toast('Text markiert, jetzt kopieren');}});
 
-if(/[?&]debug/.test(location.search))window.__sk={state,total,media,seek:t=>{state.t=t;seek(t);}};
+if(/[?&]debug/.test(location.search))window.__sk={state,total,media,seek:t=>{state.t=t;seek(t);},draw:t=>draw(t),offPrepare:t=>offPrepare(t),setOFF:v=>{OFF=v;},setRes:w=>setRes(w),DSTY};
 /* ================= KI-Edit (prompt -> edit) ================= */
 const AI={mode:LS.get('sakuga.aimode')||'local',key:LS.get('sakuga.apikey')||'',model:LS.get('sakuga.aimodel')||'claude-sonnet-5-5'};
-const AISUG=['make a world cup edit','dunkler Villain-Edit mit Blitzen','trauriger Anime-Edit, langsam','Phonk Hype, schnell, Shake','Flow-Edit wie Molob, Gold-Look','Neon Beat Edit «NO LIMITS»'];
+const AISUG=['Phonk Edit, harte Cuts','Flow-Edit wie Molob','Velocity Edit','Head Bop Edit','Aura Edit «+1000 AURA»','trauriger Anime-Edit','Villain Arc, dunkel','make a world cup edit'];
 AISUG.forEach(q=>{const b=document.createElement('button');b.type='button';b.textContent=q;b.addEventListener('click',()=>{$('#aiQ').value=q;runAI(q);});$('#aiSug').appendChild(b);});
 chips($('#aiMode'),[{id:'local',label:'Schnell (ohne KI)'},{id:'claude',label:'Claude-KI'}],()=>AI.mode,id=>{AI.mode=id;LS.set('sakuga.aimode',id);$('#aiKeyBox').hidden=id!=='claude';},'');
 chips($('#aiModel'),[{id:'claude-sonnet-5-5',label:'Sonnet 5.5'},{id:'claude-haiku-5-5',label:'Haiku 5.5 (günstiger)'}],()=>AI.model,id=>{AI.model=id;LS.set('sakuga.aimodel',id);},'');
@@ -2091,35 +2309,66 @@ $('#aiKeyBox').hidden=AI.mode!=='claude';$('#aiKey').value=AI.key?'••••�
 $('#aiKeySave').addEventListener('click',()=>{const v=$('#aiKey').value.trim();if(v&&!v.startsWith('••')){AI.key=v;LS.set('sakuga.apikey',v);$('#aiKey').value='••••••••'+v.slice(-4);toast('Schlüssel gespeichert');}});
 $('#aiSet').addEventListener('click',()=>{$('#aiPanel').hidden=!$('#aiPanel').hidden;});
 $('#aiForm').addEventListener('submit',e=>{e.preventDefault();const q=$('#aiQ').value.trim();if(q)runAI(q);$('#aiQ').blur();});
+
+/* ---- Trend-Bibliothek: Name im Prompt -> fertiges Rezept ---- */
 const AIRULES=[
- {re:/world ?cup|\bwm\b|fu(ss|ß)ball|football|soccer|\bgoal|\btor\b|messi|ronaldo|sport|champions/,preset:'velocity',look:'pop',pre:'suspense',sound:'trap',title:"THAT'S *IT*",drop:'GLORY *FOREVER*'},
- {re:/uchiha|itachi|madara|sharingan|obito|naruto|akatsuki/,preset:'villain',look:'isored',pre:'',sound:'drill',card:"YOURE *NOT* ~EVEN~ IN THE SAME *LEAGUE*",drop:'AS THE *UCHIHA*',trans:'ink'},
- {re:/black ?clover|asta|devil|demon|teufel|dämon/,preset:'villain',look:'isored',pre:'suspense',sound:'drill',drop:'DEMON VS *DEVIL*',font:'Metal Mania'},
- {re:/villain|böse|evil|dark|dunkel|aizen|bösewicht/,preset:'villain',look:'villain',pre:'suspense',sound:'drill',title:"WHO'S THE *VILLAIN*",drop:'BOW *DOWN*'},
- {re:/sad|traurig|emotional|cry|wein|melanchol|herz/,preset:'smooth',look:'eis',pre:'suspense',sound:'lofi',slow:true,title:"IT'S *OVER*",drop:'I MISS *YOU*'},
- {re:/phonk|hype|aggress|hart|crazy|krass|brutal/,preset:'phonk',look:'kalt',sound:'phonk',title:'NO *LIMITS*',drop:'NO *LIMITS*'},
- {re:/flow|smooth|weich|molob|amv|fliess/,preset:'flow',look:'warm',sound:'jrock',drop:'THE *STRONGEST*'},
- {re:/neon|bunt|colou?rful|farbig|farbwechsel/,preset:'neonbeat',look:'natur',sound:'edm',drop:'NO *LIMITS*'},
- {re:/manga|schwarz.?wei(ss|ß)|black.?(and.?)?white/,preset:'manga',look:'sw',sound:'phonk',drop:'AWAKEN'},
- {re:/12 ?fps|zeichentrick|cel/,preset:'anime12',look:'neon',sound:'jrock'},
- {re:/edm|party|rave/,preset:'hype',look:'teal',sound:'edm',drop:'LET\'S *GO*'},
- {re:/anime|otaku/,preset:'flow',look:'lila',sound:'jrock',drop:'AWAKEN'}
+ {re:/head ?bop|kopf ?nick|\bbop\b/,trend:'Head Bop',style:'headbop',preset:'clean',look:'pop',sound:'brphonk',drop:'*BOP*',anim:'pop'},
+ {re:/aura|\+ ?\d+ ?aura|aura ?farm/,trend:'Aura',style:'aura',preset:'villain',look:'gold',pre:'suspense',sound:'phonk',title:'',drop:'+1000 *AURA*',burst:true,lk:{glow:.6,ember:.35,bokeh:.3,light:0}},
+ {re:/velocity|velo\b|speed ?ramp/,trend:'Velocity',style:'flow',preset:'velocity',look:'teal',sound:'phonk',fx:{curve:'velocity',velAmt:1},drop:'',noText:true},
+ {re:/brazil|brasil|funk|tamborz/,trend:'Brazil Phonk',style:'phonk',preset:'phonk',look:'kalt',sound:'brphonk',drop:'NO *LIMITS*'},
+ {re:/phonk|drift/,trend:'Phonk',style:'phonk',preset:'phonk',look:'kalt',sound:'phonk',drop:'NO *LIMITS*'},
+ {re:/lyric|songtext|typo|stapel|stack|text ?karte|black screen/,trend:'Lyric/Typo',style:'lyric',preset:'smooth',look:'eis',pre:'suspense',sound:'lofi',card:"YOURE *NOT* ~EVEN~ IN THE SAME *LEAGUE*",drop:''},
+ {re:/glitch/,trend:'Glitch',style:'hype',preset:'flash',look:'kalt',sound:'phonk',fx:{pixBeat:.25,rgb:.8},drop:'SYSTEM *ERROR*'},
+ {re:/\b1 ?v ?1\b|\bvs\b|versus|gegen/,trend:'VS',style:'hype',preset:'hype',look:'teal',sound:'trap',drop:''},
+ {re:/world ?cup|\bwm\b|fu(ss|ß)ball|football|soccer|\bgoal|\btor\b|messi|ronaldo|sport|champions/,trend:'Sport',style:'sport',preset:'velocity',look:'pop',pre:'suspense',sound:'trap',title:"THAT'S *IT*",drop:'GLORY *FOREVER*'},
+ {re:/uchiha|itachi|madara|sharingan|obito|naruto|akatsuki/,trend:'Uchiha',style:'villain',preset:'villain',look:'isored',sound:'drill',card:"YOURE *NOT* ~EVEN~ IN THE SAME *LEAGUE*",drop:'AS THE *UCHIHA*',trans:'ink'},
+ {re:/black ?clover|asta|devil|demon|teufel|dämon/,trend:'Demon',style:'villain',preset:'villain',look:'isored',pre:'suspense',sound:'drill',drop:'DEMON VS *DEVIL*',font:'Metal Mania'},
+ {re:/villain|böse|evil|dark|dunkel|aizen|bösewicht/,trend:'Villain Arc',style:'villain',preset:'villain',look:'villain',pre:'suspense',sound:'drill',title:"WHO'S THE *VILLAIN*",drop:'BOW *DOWN*'},
+ {re:/sad|traurig|emotional|cry|wein|melanchol|herz/,trend:'Emotional',style:'sad',preset:'smooth',look:'eis',pre:'suspense',sound:'lofi',title:"IT'S *OVER*",drop:''},
+ {re:/hype|aggress|hart|crazy|krass|brutal/,trend:'Hype',style:'hype',preset:'hype',look:'kalt',sound:'trap',drop:'NO *LIMITS*'},
+ {re:/flow|smooth|weich|molob|amv|fliess/,trend:'Flow',style:'flow',preset:'flow',look:'warm',sound:'jrock',drop:'THE *STRONGEST*'},
+ {re:/neon|bunt|colou?rful|farbig|farbwechsel/,trend:'Neon',style:'hype',preset:'neonbeat',look:'natur',sound:'edm',drop:'NO *LIMITS*'},
+ {re:/manga|panel|schwarz.?wei(ss|ß)|black.?(and.?)?white/,trend:'Manga',style:'manga',preset:'manga',look:'sw',sound:'phonk',drop:'AWAKEN'},
+ {re:/12 ?fps|zeichentrick|cel/,trend:'12fps',style:'flow',preset:'anime12',look:'neon',sound:'jrock'},
+ {re:/edm|party|rave/,trend:'Party',style:'hype',preset:'hype',look:'teal',sound:'edm',drop:'LET\'S *GO*'},
+ {re:/anime|otaku/,trend:'Flow',style:'flow',preset:'flow',look:'lila',sound:'jrock',drop:'AWAKEN'}
 ];
+const STYLE_OF={velocity:'flow',phonk:'phonk',smooth:'sad',hype:'hype',flash:'hype',manga:'manga',anime12:'flow',flow:'flow',villain:'villain',neonbeat:'hype',clean:'flow'};
+const TRENDK='sakuga.trends.v1';
+function loadTrends(){try{return JSON.parse(localStorage.getItem(TRENDK)||'[]');}catch(e){return[];}}
+function saveTrends(a){try{localStorage.setItem(TRENDK,JSON.stringify(a));return true;}catch(e){return false;}}
+const normQ=x=>String(x).toLowerCase().replace(/[^a-z0-9äöüß+ ]/g,' ').replace(/\s+/g,' ').trim();
+function findTrend(q){const t=' '+normQ(q)+' ';return loadTrends().filter(x=>t.includes(' '+normQ(x.name)+' ')||t.includes(normQ(x.name))).sort((a,b)=>b.name.length-a.name.length)[0]||null;}
+function renderTrends(){const box=$('#aiTrends');if(!box)return;box.innerHTML='';const a=loadTrends();$('#aiTrendRow').hidden=!a.length;
+  a.forEach(tr=>{const b=document.createElement('button');b.type='button';b.textContent='★ '+tr.name;b.addEventListener('click',()=>{$('#aiQ').value=tr.name+' edit';runAI(tr.name+' edit');});
+    b.addEventListener('contextmenu',e=>{e.preventDefault();if(confirm('Trend «'+tr.name+'» löschen?')){saveTrends(loadTrends().filter(x=>x.name!==tr.name));renderTrends();}});box.appendChild(b);});}
+$('#aiSaveTrend').addEventListener('click',()=>{
+  const n=($('#aiTrendName').value||'').trim();if(!n){toast('Gib dem Trend einen Namen, z. B. «honorable»');$('#aiTrendName').focus();return;}
+  const T=total(),dp=state.dropEdit;
+  const texts=state.layers.filter(L=>L.type==='text'&&!L.demo).slice(0,3).map(L=>({text:L.text,at:(dp!=null&&Math.abs(L.start-dp)<.3)?'drop':L.start<.3?'intro':L.start>T-1.8?'end':+L.start.toFixed(2),style:L.style,font:L.font,anim:L.anim,card:!!L.card}));
+  const tr={name:n,style:state.dir?state.dir.style:(STYLE_OF[state.preset]||'flow'),preset:state.preset,fxAll:Object.assign({},state.fx),lookAll:Object.assign({},state.look),sound:state.libId||'',texts,burst:state.layers.some(L=>L.shape==='burst'),saved:Date.now()};
+  const a=loadTrends().filter(x=>normQ(x.name)!==normQ(n));a.push(tr);if(saveTrends(a)){$('#aiTrendName').value='';renderTrends();toast('Trend «'+n+'» gespeichert. Tippe ihn ins KI-Feld, dann baut die App diesen Stil mit neuen Clips.',5000);}else toast('Speichern geht hier leider nicht.');
+});
 function localPlan(q){
   const t=q.toLowerCase();const plan={fx:{},look:{},texts:[],notes:[]};
-  const r=AIRULES.find(x=>x.re.test(t))||{preset:'velocity',look:'natur',sound:'phonk'};
-  plan.preset=r.preset;plan.lookId=r.look;plan.preId=r.pre||'';plan.sound=r.sound;if(r.trans)plan.fx.transition=r.trans;
+  const own=findTrend(q);
+  if(own){Object.assign(plan,{trend:own.name,style:own.style,preset:own.preset,fxAll:own.fxAll,lookAll:own.lookAll,sound:own.sound||'phonk',burst:own.burst});plan.texts=(own.texts||[]).map(x=>Object.assign({},x));
+    const quoted=(q.match(/[«"“„']([^»"”“']{2,60})[»"”“']/)||[])[1];if(quoted){const d=plan.texts.find(x=>x.at==='drop')||plan.texts[0];if(d)d.text=quoted.toUpperCase();else plan.texts.push({text:quoted.toUpperCase(),at:'drop',style:'double',font:'Cinzel',anim:'pop'});}
+    if(/ohne text|no text|kein text/.test(t))plan.texts=[];return plan;}
+  const r=AIRULES.find(x=>x.re.test(t))||{trend:'Flow',style:'flow',preset:'flow',look:'warm',sound:'phonk'};
+  plan.trend=r.trend;plan.style=r.style;plan.preset=r.preset;plan.lookId=r.look;plan.preId=r.pre||'';plan.sound=r.sound;if(r.trans)plan.fx.transition=r.trans;if(r.fx)Object.assign(plan.fx,r.fx);if(r.lk)Object.assign(plan.look,r.lk);
+  if(/phonk/.test(t)&&r.style!=='headbop'&&r.style!=='aura'){plan.sound=/brazil|brasil|funk/.test(t)?'brphonk':'phonk';if(['flow','hype','sport'].includes(plan.style))plan.style='phonk';}
   const quoted=(q.match(/[«"“„']([^»"”“']{2,60})[»"”“']/)||[])[1];
-  const noText=/ohne text|no text|kein text/.test(t);
-  const lyric=/lyric|songtext|stapel|stack|text karte|black screen|schwarz/.test(t);
-  if(!noText){if(r.card||lyric)plan.texts.push({text:r.card||(quoted?quoted.toUpperCase():"YOURE *NOT* ~EVEN~ IN THE SAME *LEAGUE*"),at:'intro',style:'clean',font:'Anton',anim:'stack',card:true});
-    else if(r.title&&!quoted)plan.texts.push({text:r.title,at:'intro',style:'double',font:'Cinzel'});
-    const dt=(r.card||lyric)?r.drop:(quoted||r.drop);if(dt)plan.texts.push({text:dt.toUpperCase().replace(/~/g,''),at:'drop',style:'double',font:r.font||(/metal|gothic/.test(t)?'Metal Mania':'Cinzel'),anim:r.font?'type':'words'});}
+  const noText=/ohne text|no text|kein text/.test(t)||(r.noText&&!quoted);
+  const lyric=r.style==='lyric';
+  if(!noText){if(r.card||lyric)plan.texts.push({text:quoted&&lyric?quoted.toUpperCase():(r.card||"YOURE *NOT* ~EVEN~ IN THE SAME *LEAGUE*"),at:'intro',style:'clean',font:'Anton',anim:'stack',card:true});
+    else if(r.title&&!quoted)plan.texts.push({text:r.title,at:'intro',style:'double',font:'Cinzel',anim:'pop'});
+    const dt=(r.card||lyric)?r.drop:(quoted||r.drop);if(dt)plan.texts.push({text:dt.toUpperCase().replace(/~/g,''),at:'drop',style:'double',font:r.font||(/metal|gothic/.test(t)?'Metal Mania':'Cinzel'),anim:r.anim||(r.font?'type':'words')});}
   if(/metal|gothic|grunge/.test(t))plan.texts.forEach(x=>{if(x.at==='drop')x.font='Metal Mania';});
   if(/nur rot|only red|rot.?schwarz|red.?black/.test(t))plan.lookId='isored';
   if(/tinte|ink|pinsel|brush/.test(t))plan.fx.transition='ink';
   if(/wasted|gta/.test(t))plan.texts.push({text:'*WASTED*',at:'end',style:'band',font:'Anton',anim:'pop'});
-  plan.burst=/stern|flare|burst|impact|explosion|blitz|lightning|hype|world ?cup|fu(ss|ß)ball/.test(t)||r.preset==='phonk';
+  plan.burst=!!r.burst||/stern|flare|burst|impact|explosion|hype|world ?cup|fu(ss|ß)ball/.test(t)||r.style==='phonk';
   if(/gold|golden|trophy|pokal|troph/.test(t)){plan.lookId='gold';plan.look.ember=.35;}
   if(/blau|blue|\bice\b|\beis\b|gojo/.test(t))plan.lookId='eis';
   if(/\brot\b|\bred\b|blut|blood|sukuna/.test(t))plan.lookId='sukuna';
@@ -2129,11 +2378,10 @@ function localPlan(q){
   if(/bokeh|lichter|lights/.test(t))plan.look.bokeh=.5;
   if(/funken|ember|feuer|fire/.test(t))plan.look.ember=.5;
   if(/glow|leucht/.test(t))plan.look.glow=.55;
-  if(/schnell|fast|quick|rapid/.test(t))plan.fx.cutEvery=1;
-  if(r.slow||/langsam|slow/.test(t)){plan.fx.cutEvery=4;plan.fx.curve='hero';}
   if(/shake|wackel/.test(t))plan.fx.shake=.9;
   if(/3d/.test(t))plan.fx.swing3d=.7;
-  if(/ohne sound|no sfx|keine effekte/.test(t))plan.fx.sfx=0;else if(plan.fx.sfx==null)plan.fx.sfx=.7;
+  if(/ohne sound|no sfx|keine effekte/.test(t))plan.fx.sfx=0;else if(plan.fx.sfx==null)plan.fx.sfx=r.style==='phonk'||r.style==='headbop'?.35:.6;
+  if(/ohne hook|no hook/.test(t))plan.hook=false;
   const len=t.match(/(\d{1,2})\s*(s|sek|sec|seconds|sekunden)\b/);if(len)plan.length=Math.max(5,Math.min(60,+len[1]));
   return plan;
 }
@@ -2143,17 +2391,39 @@ async function grabFrame(m,w){
   else{try{x.drawImage(m.el,0,0,cnv.width,cnv.height);}catch(e){}}
   return cnv.toDataURL('image/jpeg',.7).split(',')[1];
 }
+const EDIT_KNOWLEDGE=`SO SIND VIRALE ANIME-/GAMING-/SPORT-EDITS AUFGEBAUT (dein Fachwissen):
+- Aufbau: HOOK (erste 0.5-1 s: der staerkste, auffaelligste Shot, sonst wischen die Leute weg) -> BUILD-UP (laengere ruhige Shots 1.5-2.5 s, Gesichter, Blicke, Atmosphaere, wenig Effekte, Kamera gleitet) -> RAMPE (letzter Takt vor dem Drop: Schnitte werden schneller) -> DROP (der beste Action-Clip GENAU auf den Drop, dann Schnitte im Takt, 0.4-0.8 s pro Shot) -> OUTRO (ein letzter starker Shot).
+- Die App setzt Schnitte, Übergaenge, Blitze und Shakes selbst nach diesem Aufbau (KI-Regie). Du waehlst: style, die Reihenfolge der Clips, welcher Clip der Held ist (hero), Look und Texte.
+- Haeufige Anfaengerfehler, die du vermeidest: Text die ganze Zeit sichtbar; jeder Schnitt mit Effekt; viele verschiedene Looks; schwarze/leere Frames; alle Shots gleich lang.
+- Ein durchgehender Look (Farbgrade) wirkt professionell. Vor dem Drop gern ein entsaettigter Suspense-Grade (preId), nach dem Drop der starke Look.
+- Text: hoechstens 2-3 Texte, kurz (1-4 Woerter), gross, nur an starken Momenten (Hook oder Drop), jeweils 1-2 Sekunden. Signature-Stil: Doppel-Text (grosse Kontur + kleines gefuelltes Wort), ein Wort in Akzentfarbe mit *Wort*. Ohne passenden Text lieber keinen Text.
+STILE (style) und TikTok-Trends:
+- flow: Molob/Flow-Edit, weiche Blur-Whip-Uebergaenge in Bewegungsrichtung, Velocity-Speedramps, Kamera gleitet. Fuer "flow", "smooth", "amv", "velocity edit".
+- phonk: Phonk/Drift-Phonk/Brazil-Phonk (verzerrte Cowbell, 808, 130-160 BPM): harte Cuts im Takt, kurze Shots, Shake und Blitze auf den Akzenten, kalter oder Rot-Schwarz-Look, wenig Text. Sounds: phonk, brphonk.
+- hype: schnelle Hype-Edits, Spin/Flash/Zoom, 3D. Auch "glitch edit", "1v1/vs edit".
+- sport: Fussball/Sport-Edits (World Cup, Messi, Ronaldo): Velocity, Saturation-Pop, Torjubel auf den Drop.
+- sad: emotionale Edits, lange Shots, weiche Blenden, kaum Effekte, kuehler Look, Lo-Fi.
+- villain: Villain-Arc, dunkel, Nur-Rot oder Lila, Tinte/Invert am Drop.
+- headbop: "Head Bop Edit": Charakter-Shots nicken im Takt (Zoom-Puls auf jedem Beat), harte Cuts, Phonk/Brazil-Phonk.
+- aura: "Aura Edit"/"+1000 Aura": coole, ruhige Charakter-Shots, Gold/Glow, langsamer Zoom, Text wie "+1000 *AURA*" auf dem Drop.
+- manga: Manga/Panel-Edit, Schwarz-Weiss, Invert-Blitze, Speedlines.
+- lyric: Lyric/Typography-Edit, Text-Karten mit gestapelten Woertern (card + anim stack).
+Wenn der Nutzer einen Trend-Namen nennt, den du nicht sicher kennst, waehle den naechstliegenden Stil und schreibe in summary ehrlich, welchen Stil du genommen hast.`;
 async function claudePlan(q){
   if(!AI.key)throw new Error('Kein API-Schlüssel');
   const clips=(state.mode==='manual'?state.mclips:state.clips).filter(c=>!c.demo).slice(0,20);
   const content=[];
-  for(let i=0;i<clips.length;i++){const m=media.get(clips[i].mid);if(!m)continue;const b64=await grabFrame(m,224);content.push({type:'text',text:'Clip '+i+': '+(m.kind==='video'?'Video '+(m.dur||0).toFixed(1)+'s':'Bild')});content.push({type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}});}
+  for(let i=0;i<clips.length;i++){const m=media.get(clips[i].mid);if(!m)continue;const b64=await grabFrame(m,224);
+    const an=clips[i].an?(' | Bewegung je Stelle (Sekunde:0-1): '+clips[i].an.map(o=>o.t.toFixed(1)+':'+(o.r??.5).toFixed(2)).join(' ')):'';
+    content.push({type:'text',text:'Clip '+i+': '+(m.kind==='video'?'Video '+(m.dur||0).toFixed(1)+'s':'Bild')+an});content.push({type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}});}
   const info={songLength:state.music?+state.music.duration.toFixed(1):null,bpm:state.bpm||null,dropInSong:state.dropSong!=null?+state.dropSong.toFixed(2):null,userHasOwnSong:!!(state.music&&!state.music.demo&&!state.music.lib),clipCount:clips.length};
-  const sys=`Du bist der Schnitt-Assistent der Video-App "Sakuga Edit" (virale Anime-, Gaming- und Sport-Edits fuer TikTok). Plane einen Edit und antworte NUR mit einem JSON-Objekt, ohne Erklaerung.
-Schema: {"preset": one of [${Object.keys(PRESETS).join(',')}], "lookId": one of [${Object.keys(LOOKS).join(',')}], "preId": one of ["",${Object.keys(LOOKS).map(k=>'"'+k+'"').join(',')}] (Look vor dem Drop, "" = gleich), "sound": one of [${LIB.map(d=>d.id).join(',')}] (nur genutzt wenn der Nutzer keinen eigenen Song hat), "length": Sekunden 8-45, "order": Liste der Clip-Indizes in Schnitt-Reihenfolge (staerkste Action-Clips nach dem Drop), "clipIn": Liste Startsekunde pro Clip-Index (oder 0), "fx": {"cutEvery":1|2|4, "transition": one of [${TRANS.map(x=>x.id).join(',')}], "shake":0-1, "zoom":0-0.4, "flash":0-1, "rgb":0-1, "swing3d":0-1, "sfx":0-1, "curve": one of [off,velocity,hero,bullet,montage]}, "look": {"glow":0-1, "bokeh":0-1, "spark":0-1, "ember":0-1, "light":0-1, "hueCycle":bool, "duo":0-1, "ovc":"#hex"}, "burst": bool (Stern-Blitz auf dem Drop), "texts": [{"text":"KURZ, GROSS, max 4 Woerter (bei card bis 9), *Wort* = Akzentfarbe, ~Wort~ = nur Kontur","at":"intro"|"drop"|"end"|Sekunde,"card": bool (Text auf schwarzem Bild, gut mit anim stack),"style": one of [${TSTYLES.map(x=>x.id).join(',')}],"font": one of [${FONTS.map(f=>f.id).join(',')}],"anim": one of [${ANIMS.map(a=>a.id).join(',')}]}], "summary":"1 Satz auf Deutsch, was du gemacht hast"}.
+  const own=loadTrends().map(x=>x.name);
+  const sys=`Du bist der Regisseur der Video-App "Sakuga Edit" (virale Anime-, Gaming- und Sport-Edits fuer TikTok). Plane einen Edit und antworte NUR mit einem JSON-Objekt, ohne Erklaerung.
+${EDIT_KNOWLEDGE}
+${own.length?'Eigene gespeicherte Trends des Nutzers (werden von der App selbst gebaut, du musst nichts tun): '+own.join(', ')+'\n':''}Schema: {"style": one of [${Object.keys(DSTY).join(',')}], "hero": Clip-Index des staerksten Shots (Hook + Drop), "preset": one of [${Object.keys(PRESETS).join(',')}], "lookId": one of [${Object.keys(LOOKS).join(',')}], "preId": one of ["",${Object.keys(LOOKS).map(k=>'"'+k+'"').join(',')}] (Look vor dem Drop, "" = gleich), "sound": one of [${LIB.map(d=>d.id).join(',')}] (nur genutzt wenn der Nutzer keinen eigenen Song hat), "length": Sekunden 8-45, "order": Liste der Clip-Indizes (ruhige Clips zuerst, Action nach hinten), "clipIn": Liste Startsekunde pro Clip-Index (oder 0), "fx": {"shake":0-1, "zoom":0-0.4, "flash":0-1, "rgb":0-1, "swing3d":0-1, "sfx":0-1}, "look": {"glow":0-1, "bokeh":0-1, "spark":0-1, "ember":0-1, "light":0-1, "hueCycle":bool, "duo":0-1, "ovc":"#hex"}, "burst": bool (Stern-Blitz auf dem Drop), "texts": [{"text":"KURZ, GROSS, max 4 Woerter (bei card bis 9), *Wort* = Akzentfarbe, ~Wort~ = nur Kontur","at":"intro"|"drop"|"end"|Sekunde,"card": bool (Text auf schwarzem Bild, gut mit anim stack),"style": one of [${TSTYLES.map(x=>x.id).join(',')}],"font": one of [${FONTS.map(f=>f.id).join(',')}],"anim": one of [${ANIMS.map(a=>a.id).join(',')}]}], "summary":"1 Satz auf Deutsch, welchen Stil/Trend du gebaut hast"}.
 Halte dich an den Wunsch des Nutzers. Texte in der Sprache des Wunsches. Hoechstens 3 Texte.`;
   content.push({type:'text',text:'Song-Info: '+JSON.stringify(info)+'\nWunsch des Nutzers: '+q});
-  const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':AI.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:AI.model,max_tokens:1500,system:sys,messages:[{role:'user',content}]})});
+  const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':AI.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:AI.model,max_tokens:1800,system:sys,messages:[{role:'user',content}]})});
   if(!res.ok){let m='HTTP '+res.status;try{const j=await res.json();m=(j.error&&j.error.message)||m;}catch(e){}throw new Error(m);}
   const j=await res.json();const txt=(j.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');const mt=txt.match(/\{[\s\S]*\}/);if(!mt)throw new Error('Keine gültige Antwort');
   const pl=JSON.parse(mt[0]);pl.fx=pl.fx||{};pl.look=pl.look||{};pl.texts=pl.texts||[];return pl;
@@ -2162,50 +2432,61 @@ let aiBusy=false;
 async function runAI(q){
   if(aiBusy)return;aiBusy=true;pause();$('#aiGo').disabled=true;$('#aiOut').hidden=false;$('#aiChips').innerHTML='';
   const hasClips=(state.mode==='manual'?state.mclips:state.clips).some(c=>!c.demo);
-  $('#aiStatus').textContent=AI.mode==='claude'?'Claude schaut sich deine Clips an und plant den Edit …':'Edit wird gebaut …';
   let plan=null,src='Schnell';
-  try{if(AI.mode==='claude'){if(!hasClips)throw new Error('Wähle zuerst Clips');plan=await claudePlan(q);src='Claude';}}
+  try{
+    if(state.mode==='auto'&&hasClips)await analyzeClips((n,N)=>{$('#aiStatus').textContent='Die KI schaut sich deine Clips an ('+n+'/'+N+'): wo ist Action, wo ist es ruhig …';});
+    $('#aiStatus').textContent=AI.mode==='claude'?'Claude plant den Edit …':'Edit wird gebaut …';
+    if(AI.mode==='claude'&&!findTrend(q)){if(!hasClips)throw new Error('Wähle zuerst Clips');plan=await claudePlan(q);src='Claude';}}
   catch(e){toast('Claude: '+(e.message||e)+' – nehme den Schnell-Modus',5000);}
   if(!plan)plan=localPlan(q);
   try{await applyPlan(plan);}catch(e){console.error(e);}
   const ch=$('#aiChips');const add=(cls,tx)=>{const sp=document.createElement('span');sp.className=cls;sp.textContent=tx;ch.appendChild(sp);};
-  add('m',src);if(plan.preset&&PRESETS[plan.preset])add('e',PRESETS[plan.preset].label);if(plan.preId&&LOOKS[plan.preId])add('l',LOOKS[plan.preId].label+' → '+(LOOKS[plan.lookId]||{}).label);else if(LOOKS[plan.lookId])add('l',LOOKS[plan.lookId].label);
+  add('m',src);if(plan.trend)add('e','Trend: '+plan.trend);if(state.dir)add('e','Regie: '+(DSTY[state.dir.style]||{}).label);
+  if(plan.preId&&LOOKS[plan.preId])add('l',LOOKS[plan.preId].label+' → '+(LOOKS[plan.lookId]||{}).label);else if(LOOKS[plan.lookId])add('l',LOOKS[plan.lookId].label);
   (plan.texts||[]).forEach(t=>add('t','«'+String(t.text).replace(/[*~]/g,'')+'»'));if(state.music)add('m','♪ '+state.music.name.slice(0,26));
-  $('#aiStatus').textContent=plan.summary||'Fertig! Tippe ▶ zum Ansehen. Alles lässt sich in den Tabs unten weiter anpassen.';
-  $('#aiGo').disabled=false;aiBusy=false;state.t=0;seek(0);play();
+  const nCut=state.segs.length;$('#aiStatus').textContent=plan.summary||('Fertig: '+nCut+' Shots. Ruhig im Build-up, bester Clip auf dem Drop, schnelle Schnitte danach. Tippe ▶ zum Ansehen.');
+  $('#aiSaveRow').hidden=false;$('#aiGo').disabled=false;aiBusy=false;state.t=0;seek(0);play();
 }
 async function applyPlan(pl){
+  const sty=DSTY[pl.style]?pl.style:(STYLE_OF[pl.preset]||'flow'),S=DSTY[sty];
   if(pl.preset&&PRESETS[pl.preset])applyPreset(pl.preset);
+  if(pl.fxAll)Object.assign(state.fx,pl.fxAll);if(pl.lookAll)Object.assign(state.look,pl.lookAll);
+  if(!pl.fxAll){state.fx.curve=S.curve;if(S.vel)state.fx.velAmt=S.vel;state.fx.drift=S.drift;state.fx.shake=S.shake;state.fx.dropMode=true;state.fx.pixBeat=0;}
   if(pl.lookId&&LOOKS[pl.lookId])state.look.id=pl.lookId;
-  state.look.preId=(pl.preId&&LOOKS[pl.preId])?pl.preId:'';
+  if(!pl.lookAll)state.look.preId=(pl.preId&&LOOKS[pl.preId])?pl.preId:'';
   const num=(v,a,b)=>typeof v==='number'&&isFinite(v)?clamp(v,a,b):undefined;
   const fx=pl.fx||{},lk=pl.look||{};
-  [['cutEvery',1,8],['shake',0,1],['zoom',0,.4],['flash',0,1],['rgb',0,1],['swing3d',0,1],['sfx',0,1]].forEach(([k,a,b])=>{const v=num(fx[k],a,b);if(v!=null)state.fx[k]=k==='cutEvery'?([1,2,4,8].includes(Math.round(v))?Math.round(v):2):v;});
+  [['cutEvery',1,8],['shake',0,1],['zoom',0,.4],['flash',0,1],['rgb',0,1],['swing3d',0,1],['sfx',0,1],['velAmt',0,1.5],['pixBeat',0,1]].forEach(([k,a,b])=>{const v=num(fx[k],a,b);if(v!=null)state.fx[k]=k==='cutEvery'?([1,2,4,8].includes(Math.round(v))?Math.round(v):2):v;});
   if(fx.transition&&TRANS.some(x=>x.id===fx.transition))state.fx.transition=fx.transition;
   if(fx.curve&&CURVES.some(x=>x.id===fx.curve))state.fx.curve=fx.curve;
   ['glow','bokeh','spark','ember','light','duo'].forEach(k=>{const v=num(lk[k],0,1);if(v!=null)state.look[k]=v;});
   if(typeof lk.hueCycle==='boolean')state.look.hueCycle=lk.hueCycle;if(typeof lk.ovc==='string'&&/^#[0-9a-f]{6}$/i.test(lk.ovc))state.look.ovc=lk.ovc;
   if(state.fx.sfx>0)buildSfx();
-  // clip order / in points (auto mode)
-  if(Array.isArray(pl.order)&&state.mode==='auto'){const real=state.clips.filter(c=>!c.demo);const seen=new Set();const ord=pl.order.filter(i=>Number.isInteger(i)&&i>=0&&i<real.length&&!seen.has(i)&&seen.add(i));real.forEach((c,i)=>{if(!seen.has(i))ord.push(i);});if(Array.isArray(pl.clipIn))real.forEach((c,i)=>{const v=num(pl.clipIn[i],0,9999);const m=media.get(c.mid);if(v!=null&&m&&m.kind==='video')c.in=Math.min(v,Math.max(0,(m.dur||0)-.5));});if(real.length)state.clips=ord.map(i=>real[i]);renderClips();}
-  // music: keep user's song, otherwise a matching Sakuga-Sound
+  const real0=state.clips.filter(c=>!c.demo);const heroId=Number.isInteger(pl.hero)&&real0[pl.hero]?real0[pl.hero].id:null;
+  if(Array.isArray(pl.order)&&state.mode==='auto'){const real=real0;const seen=new Set();const ord=pl.order.filter(i=>Number.isInteger(i)&&i>=0&&i<real.length&&!seen.has(i)&&seen.add(i));real.forEach((c,i)=>{if(!seen.has(i))ord.push(i);});if(Array.isArray(pl.clipIn))real.forEach((c,i)=>{const v=num(pl.clipIn[i],0,9999);const m=media.get(c.mid);if(v!=null&&v>0&&m&&m.kind==='video'){c.in=Math.min(v,Math.max(0,(m.dur||0)-.5));c.an=null;}});if(real.length)state.clips=ord.map(i=>real[i]);renderClips();}
   const ownSong=state.music&&!state.music.demo&&!state.music.lib;
   if(!ownSong){const def=LIB.find(d=>d.id===pl.sound)||LIB[0];if(state.libId!==def.id){$('#aiStatus').textContent='Sound «'+def.name+'» wird erzeugt …';const buf=await synthTrack(def);await setMusic(buf,def.name+' · Sakuga-Sound',false,{lib:def.id});state.libId=def.id;renderLib();}}
   const L0=num(pl.length,5,60);if(L0)state.length=L0;
   if(state.music&&!ownSong&&state.mode==='auto')placeAtDrop();
+  if(state.mode==='auto'&&state.clips.some(c=>!c.demo)){if(state.clips.some(c=>!c.demo&&!c.an))await analyzeClips();state.dir={style:sty,heroId:heroId||bestClipId(),hook:pl.hook!==false};}
   refresh();
-  // texts
+  // Texte: selten, kurz, auf starke Momente
   state.layers=state.layers.filter(L=>!L.ai&&!L.demo);
-  const T=total(),dp=state.dropEdit;
-  (pl.texts||[]).slice(0,3).forEach(tx=>{if(!tx||!tx.text)return;let st=0,en=T;if(tx.at==='intro'){st=0;en=Math.min(T,dp!=null?Math.min(dp,2.2):2);}else if(tx.at==='drop'){st=dp!=null?dp:Math.min(T*.4,T-1);en=T;}else if(typeof tx.at==='number'){st=clamp(tx.at,0,T-.5);en=Math.min(T,st+2.5);}
-    if(tx.at==='end'){st=Math.max(0,T-1.6);en=T;}
+  const T=total(),dp=state.dropEdit,p=beatPeriod();
+  const beatAfter=(st,n)=>{const b=state.eb.filter(x=>x>st+.02);return b.length>=n?b[n-1]:st+n*p;};
+  (pl.texts||[]).slice(0,3).forEach(tx=>{if(!tx||!tx.text)return;const nW=String(tx.text).trim().split(/\s+/).length;const anim=ANIMS.some(a=>a.id===tx.anim)?tx.anim:(tx.at==='drop'?'words':'pop');let st=0,en=T;
+    if(tx.at==='intro'){st=0;en=Math.min(T,dp!=null?Math.max(.8,Math.min(dp-.05,1.8)):1.8);}
+    else if(tx.at==='drop'){st=dp!=null?dp:Math.min(T*.35,T-1);en=anim==='words'||anim==='stack'?beatAfter(st,nW*(p<.4?2:1))+p*.9:st+Math.max(1.2,Math.min(2,4*p));en=Math.min(T,en,st+3.2);}
+    else if(tx.at==='end'){st=Math.max(0,T-1.5);en=T;}
+    else if(typeof tx.at==='number'){st=clamp(tx.at,0,T-.5);en=Math.min(T,st+1.5);}
     if(tx.card&&tx.at==='intro'){en=Math.min(T,dp!=null?Math.max(1.5,Math.min(dp,3.2)):3);}
-    const L=newText({ai:true,card:!!tx.card,name:'KI-Text',text:String(tx.text).slice(0,80),style:TSTYLES.some(s2=>s2.id===tx.style)?tx.style:'double',font:FONTS.some(f2=>f2.id===tx.font)?tx.font:'Cinzel',anim:ANIMS.some(a=>a.id===tx.anim)?tx.anim:(tx.at==='drop'?'words':'pop'),size:tx.card?.8:tx.at==='intro'?.55:.5,start:st,end:Math.max(st+.3,en)});
-    state.layers.push(L);state.selLayer=L.id;if(tx.at==='intro'&&!tx.card){applyAnim('popin',true);applyAnim('fadeout',true);}});
+    const L=newText({ai:true,card:!!tx.card,name:'KI-Text',text:String(tx.text).slice(0,80),style:TSTYLES.some(s2=>s2.id===tx.style)?tx.style:'double',font:FONTS.some(f2=>f2.id===tx.font)?tx.font:'Cinzel',anim,size:tx.card?.8:tx.at==='intro'?.55:.5,start:st,end:Math.max(st+.3,en)});
+    state.layers.push(L);state.selLayer=L.id;if(!tx.card&&anim==='pop'){applyAnim('popin',true);applyAnim('fadeout',true);}});
   if(pl.burst&&dp!=null)addBurstAt(dp,true);
   const endT=state.layers.find(L=>L.ai&&L.type==='text'&&L.start>=T-1.7&&L.end>=T-.01&&L.style==='band');if(endT)state.layers.forEach(L=>{if(L.ai&&L.type==='text'&&L!==endT&&L.end>endT.start)L.end=Math.max(L.start+.3,endT.start);});
   state.selLayer=null;state.done.style=true;ensureProject();refresh();commit();syncBinds();renderLayerPanel();renderManual();updDemo();
 }
+renderTrends();
 
 /* ================= desktop: keyboard, wheel, drag & drop ================= */
 function typing(e){const t=e.target;return t&&(t.tagName==='INPUT'&&!['range','button','color'].includes(t.type)||t.tagName==='TEXTAREA'||t.isContentEditable);}
