@@ -331,6 +331,7 @@ input[type=search]{-webkit-appearance:none;appearance:none}
           <p class="hint" id="aiModeHint">«Schnell» braucht kein Internet und keinen Schlüssel. Die KI kennt diese Trends: Phonk, Brazil Phonk, Flow, Velocity, Head Bop, Aura, Villain Arc, Emotional/Sad, Manga, Lyric/Typo, Glitch, VS, Sport/World Cup. Dazu Stichwörter wie gold, blitze, nur rot und «Text in Anführungszeichen». Eigene Trends speicherst du nach einem Edit mit ★.</p>
         </div>
         <div class="group" id="aiOut" hidden><p class="hint" id="aiStatus"></p><div class="aichips" id="aiChips"></div>
+          <div id="aiSongHint" class="subcard" hidden><p class="hint">🎵 Das ist ein Platzhalter-Sound der App. <b>Virale Edits leben vom echten Trend-Song.</b> Wähle ihn als Video oder Audio, die KI schneidet dann auf diesen Song.</p><label class="btn primary" for="musicIn">Trend-Song wählen</label></div>
           <div class="saverow" id="aiSaveRow" hidden><input id="aiTrendName" type="text" maxlength="40" placeholder="Gefällt dir? Als Trend speichern, z. B. honorable" aria-label="Trend-Name"><button class="btn" id="aiSaveTrend" type="button">★ Speichern</button></div></div>
       </section>
 
@@ -409,6 +410,10 @@ input[type=search]{-webkit-appearance:none;appearance:none}
           <div class="song"><span class="disc" aria-hidden="true"></span><div><b id="songName">Beispiel-Beat</b><span id="songDur">–</span></div></div>
           <input id="musicIn" type="file" accept="audio/*,video/*" hidden>
           <label class="btn primary" for="musicIn">Eigenen Song oder TikTok-Video wählen</label>
+          <details class="pro" open><summary>🔥 So nimmst du einen viralen Phonk-Song</summary><div class="group">
+            <p class="hint"><b>1.</b> Öffne den Trend-Edit auf TikTok und speichere ihn, oder nimm ihn mit der Bildschirmaufnahme auf (mit Ton).<br><b>2.</b> Tippe oben auf «Eigenen Song oder TikTok-Video wählen» und wähle dieses Video. Die App holt sich nur den Ton und findet Beats und Drop selbst.<br><b>3.</b> Gehe zurück zum KI-Feld und schreibe deinen Wunsch, z. B. «Phonk Edit». Die KI schneidet jetzt auf <b>diesen</b> Song.<br><b>4.</b> Nach dem Export in TikTok denselben Sound aus der TikTok-Musikbibliothek wählen und den Originalton stumm schalten. So ist es der offizielle, lizenzierte Sound.</p>
+            <p class="hint">Songs sind urheberrechtlich geschützt. Darum kann die App sie nicht mitliefern, aber mit deinen eigenen Dateien arbeitet sie genauso.</p>
+          </div></details>
           <div class="group"><h4>Songs suchen · frei nutzbar</h4>
             <form class="saverow" id="songForm"><input id="songQ" type="search" placeholder="z. B. phonk, epic, anime, trap" autocomplete="off" enterkeyhint="search"><button class="btn primary" id="songGo" type="submit">Suchen</button></form>
             <div class="chips" id="songTags"></div>
@@ -849,6 +854,7 @@ const DSTY={
   aura:{label:'Aura',hook:1.2,build:2,drop:.9,outro:1.8,trB:['zoomblur'],trD:['zoomblur','flash'],phrase:4,trs:.8,curve:'hero',vel:.5,drift:.7,flashAcc:.6,shake:.3},
   lyric:{label:'Lyric/Typo',hook:1.2,build:2.2,drop:1.2,outro:1.8,trB:['blur'],trD:['blur','none'],phrase:8,trs:.5,curve:'off',vel:0,drift:.6,flashAcc:.2,shake:.1}
 };
+const PUSH={phonk:.9,hype:.7,sport:.7,villain:.8,aura:.6,flow:.4,sad:.2,headbop:0,manga:.5,lyric:0};
 const SEC_EN={hook:.85,build:.35,ramp:.65,drop:1,outro:.45};
 function beatPeriod(){const b=state.eb;if(b.length>=4){const d=[];for(let i=1;i<b.length;i++)d.push(b[i]-b[i-1]);d.sort((a,c)=>a-c);return clamp(d[d.length>>1],.2,1.2);}return state.bpm?60/state.bpm:.5;}
 const pow2=x=>{let best=1;for(const v of[1,2,4,8])if(Math.abs(Math.log(v/x))<Math.abs(Math.log(best/x)))best=v;return best;};
@@ -913,11 +919,11 @@ function directorSegs(){
       if(o.ci===heroCi&&(sec==='hook'||(sec==='drop'&&dropFirst)))s+=1.2;
       s-=o.ci*.004;
       if(s>bs){bs=s;best=o;}}
-    if(sec==='drop')dropFirst=false;
+    const first=(sec==='drop'&&dropFirst);if(sec==='drop')dropFirst=false;
     const o=best;let src=o.t+(o.used?Math.min(.6,o.used*.35):0);if(o.m.kind==='video'&&o.m.dur)src=Math.max(0,Math.min(src,o.m.dur-Math.min(o.m.dur*.9,need)));
     o.used++;cUse.set(o.c,(cUse.get(o.c)||0)+1);
     const dir=(sec==='build'||sec==='outro')?((Math.floor(k/2)%2)?1:-1):((Math.floor((cuts[k-1]?cuts[k-1].gi-di:0)/(ph*2))%2)?1:-1);
-    segs.push({start:st,end:en,clip:o.c,src,k,sec,tr:trs[k],dir,en:SEC_EN[sec]??1,trs:S.trs});
+    segs.push({start:st,end:en,clip:o.c,src,k,sec,tr:trs[k],dir,en:SEC_EN[sec]??1,trs:S.trs,first});
     prev3=prev2;prev2=prev;prev=o.c;
   }
   return segs;
@@ -946,7 +952,8 @@ function bestClipId(){let b=null,bs=-1;state.clips.forEach(c=>{if(c.demo)return;
 function segAt(t){const s=state.segs;if(!s.length)return null;for(let i=0;i<s.length;i++)if(t<s[i].end)return s[i];return s[s.length-1];}
 const ss=(a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t);};
 function rateAt(t){
-  const f=state.fx;if(f.curve==='off')return 1;const eb=state.eb,i=lastIdx(eb,t);
+  const f=state.fx;if(f.curve==='off')return 1;
+  if(state.dir){const g0=segAt(t);if(g0&&g0.first&&t-g0.start<.1&&(DSTY[state.dir.style]||{}).fast!==false)return .1;}const eb=state.eb,i=lastIdx(eb,t);
   if(i<0||i>=eb.length-1)return 1;const sg=state.dir?segAt(t):null;const p=(t-eb[i])/(eb[i+1]-eb[i]),a=f.velAmt*(sg&&sg.en!=null?Math.min(1,.3+sg.en*.8):1);
   const lo=1-.7*a,hi=1+1.8*a;
   if(f.curve==='velocity')return lo+(hi-lo)*ss(.2,.85,p);
@@ -972,6 +979,7 @@ function fxAt(t){
   let scale=1.04+f.zoom*E+D.b*.25*M+(f.drift?f.drift*.04*(1+Math.sin(t*.31)):0),flash=f.flash*Math.pow(EF,2.5)+(D.b>0?.9*M*Math.exp(-(t-state.dropEdit)*7):0);
   let rgb=f.rgb*(.022*EF+.0015)+D.b*.02*M,ry=f.swing3d*.5*E*(i%2?1:-1),rx=f.swing3d*.16*E*Math.sin(h1*6.28),pix=f.pixBeat*(dt<.09?1:0)*D.I*M;
   if(DS&&DS.bop)scale+=.07*DS.bop*e*M;
+  if(dOn&&state.dropEdit!=null&&t<state.dropEdit){const pp=PUSH[state.dir.style]||0;scale+=.16*pp*Math.pow(clamp(t/state.dropEdit,0,1),2.2)*M;}
   const man=state.mode==='manual';let tty=man&&seg?(seg.clip.trans||'none'):(dOn&&seg.tr!=null?seg.tr:f.transition);
   if(dOn&&seg.k>0&&tty==='none'&&(seg.sec==='drop'||seg.sec==='ramp')){const d=t-seg.start;scale+=.09*M*Math.exp(-d*11);const a2=.012*M*(DS.shake||0)*Math.exp(-d*9);ox+=a2*Math.sin(d*60+seg.k);oy+=a2*Math.cos(d*53+seg.k);}
   if(seg&&seg.k>0&&tty!=='none'&&(man||f.trans>0||dOn)){
@@ -2445,7 +2453,7 @@ async function runAI(q){
   if(plan.preId&&LOOKS[plan.preId])add('l',LOOKS[plan.preId].label+' → '+(LOOKS[plan.lookId]||{}).label);else if(LOOKS[plan.lookId])add('l',LOOKS[plan.lookId].label);
   (plan.texts||[]).forEach(t=>add('t','«'+String(t.text).replace(/[*~]/g,'')+'»'));if(state.music)add('m','♪ '+state.music.name.slice(0,26));
   const nCut=state.segs.length;$('#aiStatus').textContent=plan.summary||('Fertig: '+nCut+' Shots. Ruhig im Build-up, bester Clip auf dem Drop, schnelle Schnitte danach. Tippe ▶ zum Ansehen.');
-  $('#aiSaveRow').hidden=false;$('#aiGo').disabled=false;aiBusy=false;state.t=0;seek(0);play();
+  $('#aiSaveRow').hidden=false;$('#aiSongHint').hidden=!!(state.music&&!state.music.demo&&!state.music.lib);$('#aiGo').disabled=false;aiBusy=false;state.t=0;seek(0);play();
 }
 async function applyPlan(pl){
   const sty=DSTY[pl.style]?pl.style:(STYLE_OF[pl.preset]||'flow'),S=DSTY[sty];

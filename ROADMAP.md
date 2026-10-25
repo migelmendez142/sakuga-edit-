@@ -81,6 +81,8 @@ Ideensammlung für die nächsten Versionen. Neue Wünsche einfach unten ergänze
 - [x] Neue Sounds: **Brazil Phonk** (Tamborzão, verzerrte Cowbell, 808) und neue **Phonk Drift**
 - [x] **Export Bild für Bild** (WebCodecs): ruckelfrei 30/60 fps, volle Schärfe, Standard 1080p
 - [x] **Volle Auflösung:** Clips werden nicht mehr auf 540 px verkleinert (das war die Pixel-Ursache)
+- [x] **Virale Songs:** Anleitung in der App (TikTok-Video oder Song wählen → Beats + Drop automatisch), Hinweis nach dem KI-Edit, wenn nur der Platzhalter-Sound läuft
+- [x] **Spannung vor dem Drop:** langsamer Push-In, am Drop kurzer Freeze-Hit (Standbild + Blitz) und Zoom-Punch
 - [ ] Trend «Honorable»: Miguel schickt Bildschirmaufnahmen, dann genau nachbauen
 
 ## Ideen sammeln
