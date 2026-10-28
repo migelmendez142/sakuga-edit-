@@ -83,6 +83,9 @@ Ideensammlung für die nächsten Versionen. Neue Wünsche einfach unten ergänze
 - [x] **Volle Auflösung:** Clips werden nicht mehr auf 540 px verkleinert (das war die Pixel-Ursache)
 - [x] **Virale Songs:** Anleitung in der App (TikTok-Video oder Song wählen → Beats + Drop automatisch), Hinweis nach dem KI-Edit, wenn nur der Platzhalter-Sound läuft
 - [x] **Spannung vor dem Drop:** langsamer Push-In, am Drop kurzer Freeze-Hit (Standbild + Blitz) und Zoom-Punch
+- [x] **Demon-Stil** (Referenz «Demon vs Devil»): auf fast jedem Schnitt kurze Effekte (Wisch, Negativ-Frame, Blitz), Violett-Grade, kleiner Titel im Build-up, Fade-out am Ende
+- [x] Fix: alte Formen (z. B. goldener Stern) blieben bei jedem neuen KI-Edit im Projekt und waren in jedem Frame zu sehen
+- [x] iPhone-Export: läuft ruckelfrei auch ohne Audio-Encoder (MP4 ohne Ton), Grund des Fallbacks wird angezeigt
 - [ ] Trend «Honorable»: Miguel schickt Bildschirmaufnahmen, dann genau nachbauen
 
 ## Ideen sammeln

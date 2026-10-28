@@ -529,7 +529,7 @@ input[type=search]{-webkit-appearance:none;appearance:none}
     <div id="exStart" class="group">
       <div class="group"><h4>Qualität</h4><div class="seg" id="qSeg"></div></div>
       <div class="group"><h4>Bilder pro Sekunde</h4><div class="seg" id="fpsOutSeg"></div></div>
-      <p class="hint">Dein Edit (<b id="exLen">15 s</b>) wird Bild für Bild berechnet: ruckelfrei und in voller Schärfe, auch mit vielen Effekten. Lass die App offen und den Bildschirm an. Kein Wasserzeichen.</p>
+      <p class="hint">Dein Edit (<b id="exLen">15 s</b>) wird Bild für Bild berechnet: ruckelfrei und in voller Schärfe, auch mit vielen Effekten. Lass die App offen und den Bildschirm an. Kein Wasserzeichen. Kann dein Gerät den Ton nicht so kodieren, kommt das Video <b>ohne Ton</b> (ruckelfrei). Den Trend-Sound fügst du dann in TikTok hinzu.</p>
       <div class="btnrow"><button class="btn primary" id="exGo" type="button">Export starten</button><button class="btn ghost" id="exCancel" type="button">Abbrechen</button></div>
     </div>
     <div id="exRun" class="group" hidden>
@@ -578,7 +578,7 @@ const PRESETS={
   clean:{label:'Clean',desc:'Nur Schnitte im Takt, kaum Effekte',look:{id:'natur',glow:0},fx:{shake:0,zoom:.04,flash:0,rgb:0,lines:0,swing3d:0,zoomblur:0,pixBeat:0,blur:.3,echo:0,transition:'none',trans:.3,curve:'off',velAmt:.5,hard:.5,invert:false,cutEvery:2,fpsLook:0}}
 };
 const LOOK0={id:'natur',contrast:.15,sat:.15,vignette:.35,grain:.15,bars:false,glow:.2,outline:0,cel:0,halftone:0,rays:0,wave:0,mirror:0,hueCycle:false,duo:0,bokeh:0,spark:0,ember:0,light:0,ovc:'#b04dff',preId:''};
-const LOOKS={natur:{label:'Natur',tint:[1,1,1],split:0,bw:0},suspense:{label:'Suspense Grade',tint:[.96,1,1.06],split:1,bw:0,sh:[-.03,0,.05],hi:[.02,.01,0],sat:-.5,con:.22},isored:{label:'Nur Rot',tint:[1.02,.98,.98],split:0,bw:0,iso:1,con:.25,sat:.1},pop:{label:'Saturation Pop',tint:[1.04,1,.98],split:0,bw:0,sat:.45,con:.18},kalt:{label:'Kalt',tint:[.92,1,1.1],split:0,bw:0},warm:{label:'Warm',tint:[1.1,1,.88],split:0,bw:0},teal:{label:'Teal & Orange',tint:[1,1,1],split:1,bw:0,sh:[-.03,.04,.09],hi:[.09,.03,-.06]},lila:{label:'Toji-Lila',tint:[1.04,.84,1.18],split:1,bw:0,sh:[.06,-.03,.13],hi:[.09,.0,.1]},sukuna:{label:'Sukuna-Rot',tint:[1.22,.78,.78],split:1,bw:0,sh:[.02,-.05,-.05],hi:[.1,-.02,-.03]},eis:{label:'Gojo-Eisblau',tint:[.86,1.02,1.22],split:1,bw:0,sh:[-.05,.02,.11],hi:[.0,.05,.09]},gold:{label:'Gold',tint:[1.22,1.02,.68],split:1,bw:0,sh:[.05,.0,-.07],hi:[.13,.07,-.09]},villain:{label:'Villain',tint:[.9,.78,1.12],split:1,bw:0,sh:[.05,-.06,.13],hi:[.05,-.02,.07]},neon:{label:'Neon',tint:[1.08,.9,1.14],split:0,bw:0},sw:{label:'Manga S/W',tint:[1,1,1],split:0,bw:1}};
+const LOOKS={natur:{label:'Natur',tint:[1,1,1],split:0,bw:0},neon2:{label:'Violett-Neon',tint:[1.1,.84,1.24],split:1,bw:0,sh:[.05,-.02,.12],hi:[.1,-.02,.08],sat:.38,con:.3},suspense:{label:'Suspense Grade',tint:[.96,1,1.06],split:1,bw:0,sh:[-.03,0,.05],hi:[.02,.01,0],sat:-.5,con:.22},isored:{label:'Nur Rot',tint:[1.02,.98,.98],split:0,bw:0,iso:1,con:.25,sat:.1},pop:{label:'Saturation Pop',tint:[1.04,1,.98],split:0,bw:0,sat:.45,con:.18},kalt:{label:'Kalt',tint:[.92,1,1.1],split:0,bw:0},warm:{label:'Warm',tint:[1.1,1,.88],split:0,bw:0},teal:{label:'Teal & Orange',tint:[1,1,1],split:1,bw:0,sh:[-.03,.04,.09],hi:[.09,.03,-.06]},lila:{label:'Toji-Lila',tint:[1.04,.84,1.18],split:1,bw:0,sh:[.06,-.03,.13],hi:[.09,.0,.1]},sukuna:{label:'Sukuna-Rot',tint:[1.22,.78,.78],split:1,bw:0,sh:[.02,-.05,-.05],hi:[.1,-.02,-.03]},eis:{label:'Gojo-Eisblau',tint:[.86,1.02,1.22],split:1,bw:0,sh:[-.05,.02,.11],hi:[.0,.05,.09]},gold:{label:'Gold',tint:[1.22,1.02,.68],split:1,bw:0,sh:[.05,.0,-.07],hi:[.13,.07,-.09]},villain:{label:'Villain',tint:[.9,.78,1.12],split:1,bw:0,sh:[.05,-.06,.13],hi:[.05,-.02,.07]},neon:{label:'Neon',tint:[1.08,.9,1.14],split:0,bw:0},sw:{label:'Manga S/W',tint:[1,1,1],split:0,bw:1}};
 const TRANS=[{id:'none',label:'Keiner'},{id:'swipe',label:'Swipe'},{id:'whip',label:'Whip'},{id:'zoom',label:'Zoom-Through'},{id:'spin',label:'Spin'},{id:'flip',label:'3D-Flip'},{id:'flash',label:'Flash'},{id:'glitch',label:'Glitch'},{id:'pixel',label:'Pixel'},{id:'blur',label:'Blur-Whip'},{id:'zoomblur',label:'Zoom-Blur'},{id:'invert',label:'Invert-Blitz'},{id:'split',label:'Split-Screen'},{id:'ink',label:'Tinte'},{id:'mix',label:'Mix'}];
 const MIXT=['swipe','whip','zoom','spin','flip','flash','glitch','pixel','blur','zoomblur','ink'];
 const CURVES=[{id:'off',label:'Aus'},{id:'velocity',label:'Velocity'},{id:'hero',label:'Hero'},{id:'bullet',label:'Bullet'},{id:'montage',label:'Montage'}];
@@ -844,17 +844,19 @@ function buildSegments(){
    Dazu: ein durchgehender Look, Text selten und kurz, Effekte auf die starken Beats statt auf jeden Beat. */
 const DSTY={
   flow:{label:'Flow',hook:1,build:1.6,drop:.75,outro:1.6,trB:['blur','zoomblur'],trD:['zoomblur','blur'],phrase:4,trs:.8,curve:'velocity',vel:.55,drift:.8,flashAcc:.35,shake:.15},
-  phonk:{label:'Phonk',hook:.7,build:.9,drop:.45,outro:1.1,trB:['whip','zoom'],trD:['flash','glitch','zoom'],phrase:4,trs:.75,curve:'velocity',vel:.85,drift:.15,flashAcc:.9,shake:.9,fast:true},
-  hype:{label:'Hype',hook:.9,build:1.2,drop:.55,outro:1.2,trB:['whip','zoom'],trD:['flash','spin','zoomblur'],phrase:4,trs:.7,curve:'velocity',vel:.7,drift:.3,flashAcc:.7,shake:.6},
+  phonk:{label:'Phonk',hook:.7,build:.9,drop:.45,outro:1.1,trB:['whip','zoom'],trD:['blur','flash','zoomblur','invert','glitch'],phrase:2,trs:.75,curve:'velocity',vel:.85,drift:.15,flashAcc:.9,shake:.9,fast:true},
+  hype:{label:'Hype',hook:.9,build:1.2,drop:.55,outro:1.2,trB:['whip','zoom'],trD:['blur','flash','spin','zoomblur'],phrase:2,trs:.7,curve:'velocity',vel:.7,drift:.3,flashAcc:.7,shake:.6},
   sport:{label:'Sport',hook:.9,build:1.3,drop:.6,outro:1.4,trB:['whip','zoomblur'],trD:['flash','whip','zoomblur'],phrase:4,trs:.7,curve:'velocity',vel:.7,drift:.3,flashAcc:.7,shake:.5},
   sad:{label:'Emotional',hook:1.4,build:2.6,drop:1.5,outro:2.2,trB:['blur'],trD:['blur','zoomblur'],phrase:8,trs:.5,curve:'hero',vel:.35,drift:.9,flashAcc:.08,shake:0},
-  villain:{label:'Villain',hook:1.1,build:1.8,drop:.65,outro:1.6,trB:['zoomblur','blur'],trD:['invert','zoomblur','blur'],phrase:4,trs:.8,curve:'velocity',vel:.6,drift:.6,flashAcc:.5,shake:.4,dropTr:'ink'},
+  villain:{label:'Villain',hook:1.1,build:1.8,drop:.55,outro:1.6,trB:['zoomblur','blur'],trD:['blur','invert','zoomblur','flash','glitch'],phrase:2,trs:.8,curve:'velocity',vel:.6,drift:.6,flashAcc:.5,shake:.4,dropTr:'ink'},
+  demon:{label:'Demon',hook:1.4,build:1.5,drop:.4,outro:1.3,trB:['blur','invert','flash'],trD:['blur','invert','flash','zoomblur','glitch','whip'],phrase:1,trs:.95,curve:'velocity',vel:.5,drift:.5,flashAcc:.95,shake:.55,cutfx:1},
   headbop:{label:'Head Bop',hook:.9,build:1.4,drop:1.1,outro:1.4,trB:['none'],trD:['none','zoom'],phrase:8,trs:.6,curve:'off',vel:0,drift:0,flashAcc:.2,shake:.2,bop:1},
   manga:{label:'Manga',hook:1,build:1.5,drop:.6,outro:1.4,trB:['flash'],trD:['invert','flash','none'],phrase:4,trs:.7,curve:'bullet',vel:.5,drift:.3,flashAcc:.8,shake:.6},
   aura:{label:'Aura',hook:1.2,build:2,drop:.9,outro:1.8,trB:['zoomblur'],trD:['zoomblur','flash'],phrase:4,trs:.8,curve:'hero',vel:.5,drift:.7,flashAcc:.6,shake:.3},
   lyric:{label:'Lyric/Typo',hook:1.2,build:2.2,drop:1.2,outro:1.8,trB:['blur'],trD:['blur','none'],phrase:8,trs:.5,curve:'off',vel:0,drift:.6,flashAcc:.2,shake:.1}
 };
-const PUSH={phonk:.9,hype:.7,sport:.7,villain:.8,aura:.6,flow:.4,sad:.2,headbop:0,manga:.5,lyric:0};
+const PUSH={phonk:.9,hype:.7,sport:.7,villain:.8,demon:.95,aura:.6,flow:.4,sad:.2,headbop:0,manga:.5,lyric:0};
+const PUNCH={demon:[.4,.4,.6,.5,.12],phonk:[.32,.32,.45,.38,.1],villain:[.34,.32,.5,.42,.1],hype:[.3,.32,.4,.32,.08],sport:[.27,.36,.32,.26,.06],aura:[.27,.22,.6,.36,.08],flow:[.24,.22,.42,.27,.06],headbop:[.3,.32,.35,.3,.08],manga:[.32,0,.12,.3,.1],sad:[.16,-.05,.32,.36,.1],lyric:[.2,0,.28,.3,.08]};
 const SEC_EN={hook:.85,build:.35,ramp:.65,drop:1,outro:.45};
 function beatPeriod(){const b=state.eb;if(b.length>=4){const d=[];for(let i=1;i<b.length;i++)d.push(b[i]-b[i-1]);d.sort((a,c)=>a-c);return clamp(d[d.length>>1],.2,1.2);}return state.bpm?60/state.bpm:.5;}
 const pow2=x=>{let best=1;for(const v of[1,2,4,8])if(Math.abs(Math.log(v/x))<Math.abs(Math.log(best/x)))best=v;return best;};
@@ -953,7 +955,7 @@ function segAt(t){const s=state.segs;if(!s.length)return null;for(let i=0;i<s.le
 const ss=(a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t);};
 function rateAt(t){
   const f=state.fx;if(f.curve==='off')return 1;
-  if(state.dir){const g0=segAt(t);if(g0&&g0.first&&t-g0.start<.1&&(DSTY[state.dir.style]||{}).fast!==false)return .1;}const eb=state.eb,i=lastIdx(eb,t);
+  if(state.dir){const g0=segAt(t);if(g0&&g0.first&&t-g0.start<.1)return .1;if(g0&&(g0.sec==='build'||g0.sec==='hook')&&state.dropEdit!=null)return state.dir.style==='sad'?.45:.28;}const eb=state.eb,i=lastIdx(eb,t);
   if(i<0||i>=eb.length-1)return 1;const sg=state.dir?segAt(t):null;const p=(t-eb[i])/(eb[i+1]-eb[i]),a=f.velAmt*(sg&&sg.en!=null?Math.min(1,.3+sg.en*.8):1);
   const lo=1-.7*a,hi=1+1.8*a;
   if(f.curve==='velocity')return lo+(hi-lo)*ss(.2,.85,p);
@@ -981,6 +983,7 @@ function fxAt(t){
   if(DS&&DS.bop)scale+=.07*DS.bop*e*M;
   if(dOn&&state.dropEdit!=null&&t<state.dropEdit){const pp=PUSH[state.dir.style]||0;scale+=.16*pp*Math.pow(clamp(t/state.dropEdit,0,1),2.2)*M;}
   const man=state.mode==='manual';let tty=man&&seg?(seg.clip.trans||'none'):(dOn&&seg.tr!=null?seg.tr:f.transition);
+  if(dOn&&DS.cutfx&&seg.k>0&&(seg.sec==='drop'||seg.sec==='ramp'||seg.sec==='build')){const d=t-seg.start,hk=hash(seg.k*5.3+2);flash+=(hk>.4?.4:.22)*Math.exp(-d*15);rgb+=.03*Math.exp(-d*12);if(hk>.55&&d<.07)tinv=1;if(hk<=.55&&hk>.2){smear=Math.max(smear,.8*Math.exp(-d*14));ox+=(hk>.4?1:-1)*.5*Math.exp(-d*16);}pix=Math.max(pix,0);}
   if(dOn&&seg.k>0&&tty==='none'&&(seg.sec==='drop'||seg.sec==='ramp')){const d=t-seg.start;scale+=.09*M*Math.exp(-d*11);const a2=.012*M*(DS.shake||0)*Math.exp(-d*9);ox+=a2*Math.sin(d*60+seg.k);oy+=a2*Math.cos(d*53+seg.k);}
   if(seg&&seg.k>0&&tty!=='none'&&(man||f.trans>0||dOn)){
     const d=t-seg.start,s=man?Math.max(.6,f.trans):(dOn?seg.trs:f.trans),dir=dOn?seg.dir:(seg.k%2?1:-1);let ty=tty;if(ty==='mix')ty=MIXT[Math.floor(hash(seg.k*7.7)*MIXT.length)%MIXT.length];
@@ -2096,11 +2099,11 @@ async function pickVideoCfg(w,h,fps,br){
   return null;
 }
 async function exportFrames(onp){
-  if(!window.VideoEncoder||!window.VideoFrame||!window.Mp4Muxer)return'nosupport';
+  if(!window.VideoEncoder||!window.VideoFrame||!window.Mp4Muxer){state.exWhy='Kein Video-Encoder (VideoEncoder fehlt)';return'nosupport';}
   const fps=state.fpsOut,T=total(),w=state.q,h=Math.round(w*16/9),br=(w>720?16e6:9e6)*(fps>30?1.4:1);
-  const vc=await pickVideoCfg(w,h,fps,br);if(!vc)return'nosupport';
-  const mix=await renderMix(T);
-  let acfg=null,amux='aac';if(mix){if(!window.AudioEncoder||!window.AudioData)return'noaudio';const cs=[['mp4a.40.2','aac']];if(/[?&]debug/.test(location.search))cs.push(['opus','opus']);for(const [codec,mx] of cs){const c={codec,sampleRate:mix.sampleRate,numberOfChannels:2,bitrate:192000};try{const r=await AudioEncoder.isConfigSupported(c);if(r&&r.supported){acfg=c;amux=mx;break;}}catch(e){}}if(!acfg)return'noaudio';}
+  const vc=await pickVideoCfg(w,h,fps,br);if(!vc){state.exWhy='H.264 in '+w+'x'+h+' nicht unterstützt';return'nosupport';}
+  let mix=await renderMix(T);if(mix&&state.exSilent)mix=null;
+  let acfg=null,amux='aac';if(mix){if(!window.AudioEncoder||!window.AudioData){state.exWhy='Dein Browser kann keinen Ton Bild für Bild kodieren';return'noaudio';}const cs=[['mp4a.40.2','aac']];if(/[?&]debug/.test(location.search))cs.push(['opus','opus']);for(const [codec,mx] of cs){const c={codec,sampleRate:mix.sampleRate,numberOfChannels:2,bitrate:192000};try{const r=await AudioEncoder.isConfigSupported(c);if(r&&r.supported){acfg=c;amux=mx;break;}}catch(e){}}if(!acfg){state.exWhy='AAC-Ton nicht unterstützt';return'noaudio';}}
   const muxer=new Mp4Muxer.Muxer({target:new Mp4Muxer.ArrayBufferTarget(),video:{codec:vc.mux,width:w,height:h,frameRate:fps},audio:acfg?{codec:amux,numberOfChannels:2,sampleRate:mix.sampleRate}:undefined,fastStart:'in-memory',firstTimestampBehavior:'offset'});
   let err=null;
   if(acfg){const ae=new AudioEncoder({output:(ch,meta)=>muxer.addAudioChunk(ch,meta),error:e=>{err=e;}});ae.configure(acfg);
@@ -2133,12 +2136,12 @@ async function startExport(){
   if(state.exporting)return;
   if(window.VideoEncoder&&window.Mp4Muxer){
     cancelled=false;showStep('exRun');$('#exPct').textContent='0 %';$('#exBar').style.width='0%';
-    state.exporting=true;let r=null;
-    try{r=await exportFrames(p=>{const q=Math.round(p*100);$('#exPct').textContent=q+' %';$('#exBar').style.width=q+'%';});}catch(e){console.error(e);r='error';}
+    state.exporting=true;let r=null;state.exWhy='';state.exSilent=!window.AudioEncoder&&state.exAudio!=='rt';
+    try{r=await exportFrames(p=>{const q=Math.round(p*100);$('#exPct').textContent=q+' %';$('#exBar').style.width=q+'%';});}catch(e){console.error(e);state.exWhy=String(e&&e.message||e).slice(0,80);r='error';}
     state.exporting=false;OFF=false;setRes(PREVW());state.t=0;seek(0);dirty=true;
-    if(r instanceof Blob){outBlob=r;outExt='mp4';exShowDone();return;}
+    if(r instanceof Blob){outBlob=r;outExt='mp4';exShowDone();if(state.exSilent&&state.music)$('#exHint').textContent='MP4 ohne Ton, ruckelfrei in voller Schärfe. Füge in TikTok den Trend-Sound hinzu (Originalton aus). '+saveHint();return;}
     if(r==='cancel'){showStep('exStart');$('#exportSheet').hidden=true;return;}
-    if(r==='error')toast('Bild-für-Bild-Export ging nicht, nehme den Echtzeit-Export',4000);
+    if(r==='error'||r==='nosupport'||r==='noaudio')toast('Bild-für-Bild-Export nicht möglich ('+(state.exWhy||r)+'). Nehme den Echtzeit-Export, der kann ruckeln.',7000);
   }
   startExportRT();
 }
@@ -2320,18 +2323,18 @@ $('#aiForm').addEventListener('submit',e=>{e.preventDefault();const q=$('#aiQ').
 
 /* ---- Trend-Bibliothek: Name im Prompt -> fertiges Rezept ---- */
 const AIRULES=[
+ {re:/black ?clover|asta|devil|demon|teufel|dämon/,trend:'Demon',style:'demon',preset:'villain',look:'neon2',sound:'drill',drop:'DEMON VS *DEVIL*'},
  {re:/head ?bop|kopf ?nick|\bbop\b/,trend:'Head Bop',style:'headbop',preset:'clean',look:'pop',sound:'brphonk',drop:'*BOP*',anim:'pop'},
  {re:/aura|\+ ?\d+ ?aura|aura ?farm/,trend:'Aura',style:'aura',preset:'villain',look:'gold',pre:'suspense',sound:'phonk',title:'',drop:'+1000 *AURA*',burst:true,lk:{glow:.6,ember:.35,bokeh:.3,light:0}},
  {re:/velocity|velo\b|speed ?ramp/,trend:'Velocity',style:'flow',preset:'velocity',look:'teal',sound:'phonk',fx:{curve:'velocity',velAmt:1},drop:'',noText:true},
- {re:/brazil|brasil|funk|tamborz/,trend:'Brazil Phonk',style:'phonk',preset:'phonk',look:'kalt',sound:'brphonk',drop:'NO *LIMITS*'},
- {re:/phonk|drift/,trend:'Phonk',style:'phonk',preset:'phonk',look:'kalt',sound:'phonk',drop:'NO *LIMITS*'},
+ {re:/brazil|brasil|funk|tamborz/,trend:'Brazil Phonk',style:'phonk',preset:'phonk',look:'neon2',sound:'brphonk',drop:'NO *LIMITS*'},
+ {re:/phonk|drift/,trend:'Phonk',style:'phonk',preset:'phonk',look:'neon2',sound:'phonk',drop:'NO *LIMITS*'},
  {re:/lyric|songtext|typo|stapel|stack|text ?karte|black screen/,trend:'Lyric/Typo',style:'lyric',preset:'smooth',look:'eis',pre:'suspense',sound:'lofi',card:"YOURE *NOT* ~EVEN~ IN THE SAME *LEAGUE*",drop:''},
  {re:/glitch/,trend:'Glitch',style:'hype',preset:'flash',look:'kalt',sound:'phonk',fx:{pixBeat:.25,rgb:.8},drop:'SYSTEM *ERROR*'},
  {re:/\b1 ?v ?1\b|\bvs\b|versus|gegen/,trend:'VS',style:'hype',preset:'hype',look:'teal',sound:'trap',drop:''},
  {re:/world ?cup|\bwm\b|fu(ss|ß)ball|football|soccer|\bgoal|\btor\b|messi|ronaldo|sport|champions/,trend:'Sport',style:'sport',preset:'velocity',look:'pop',pre:'suspense',sound:'trap',title:"THAT'S *IT*",drop:'GLORY *FOREVER*'},
  {re:/uchiha|itachi|madara|sharingan|obito|naruto|akatsuki/,trend:'Uchiha',style:'villain',preset:'villain',look:'isored',sound:'drill',card:"YOURE *NOT* ~EVEN~ IN THE SAME *LEAGUE*",drop:'AS THE *UCHIHA*',trans:'ink'},
- {re:/black ?clover|asta|devil|demon|teufel|dämon/,trend:'Demon',style:'villain',preset:'villain',look:'isored',pre:'suspense',sound:'drill',drop:'DEMON VS *DEVIL*',font:'Metal Mania'},
- {re:/villain|böse|evil|dark|dunkel|aizen|bösewicht/,trend:'Villain Arc',style:'villain',preset:'villain',look:'villain',pre:'suspense',sound:'drill',title:"WHO'S THE *VILLAIN*",drop:'BOW *DOWN*'},
+ {re:/villain|böse|evil|dark|dunkel|aizen|bösewicht/,trend:'Villain Arc',style:'villain',preset:'villain',look:'neon2',sound:'drill',title:"WHO'S THE *VILLAIN*"},
  {re:/sad|traurig|emotional|cry|wein|melanchol|herz/,trend:'Emotional',style:'sad',preset:'smooth',look:'eis',pre:'suspense',sound:'lofi',title:"IT'S *OVER*",drop:''},
  {re:/hype|aggress|hart|crazy|krass|brutal/,trend:'Hype',style:'hype',preset:'hype',look:'kalt',sound:'trap',drop:'NO *LIMITS*'},
  {re:/flow|smooth|weich|molob|amv|fliess/,trend:'Flow',style:'flow',preset:'flow',look:'warm',sound:'jrock',drop:'THE *STRONGEST*'},
@@ -2371,7 +2374,8 @@ function localPlan(q){
   const lyric=r.style==='lyric';
   if(!noText){if(r.card||lyric)plan.texts.push({text:quoted&&lyric?quoted.toUpperCase():(r.card||"YOURE *NOT* ~EVEN~ IN THE SAME *LEAGUE*"),at:'intro',style:'clean',font:'Anton',anim:'stack',card:true});
     else if(r.title&&!quoted)plan.texts.push({text:r.title,at:'intro',style:'double',font:'Cinzel',anim:'pop'});
-    const dt=(r.card||lyric)?r.drop:(quoted||r.drop);if(dt)plan.texts.push({text:dt.toUpperCase().replace(/~/g,''),at:'drop',style:'double',font:r.font||(/metal|gothic/.test(t)?'Metal Mania':'Cinzel'),anim:r.anim||(r.font?'type':'words')});}
+    const dt=(r.card||lyric)?r.drop:(quoted||r.drop);const dropTxt=(r.style==='aura'||r.style==='headbop'||r.card||lyric);
+    if(dt&&(dropTxt||!r.title||quoted))plan.texts.push({text:dt.toUpperCase().replace(/~/g,''),at:dropTxt?'drop':'intro',style:'double',font:r.font||(/metal|gothic/.test(t)?'Metal Mania':'Cinzel'),anim:r.anim||(r.font?'type':'words')});}
   if(/metal|gothic|grunge/.test(t))plan.texts.forEach(x=>{if(x.at==='drop')x.font='Metal Mania';});
   if(/nur rot|only red|rot.?schwarz|red.?black/.test(t))plan.lookId='isored';
   if(/tinte|ink|pinsel|brush/.test(t))plan.fx.transition='ink';
@@ -2461,7 +2465,8 @@ async function applyPlan(pl){
   if(pl.fxAll)Object.assign(state.fx,pl.fxAll);if(pl.lookAll)Object.assign(state.look,pl.lookAll);
   if(!pl.fxAll){state.fx.curve=S.curve;if(S.vel)state.fx.velAmt=S.vel;state.fx.drift=S.drift;state.fx.shake=S.shake;state.fx.dropMode=true;state.fx.pixBeat=0;}
   if(pl.lookId&&LOOKS[pl.lookId])state.look.id=pl.lookId;
-  if(!pl.lookAll)state.look.preId=(pl.preId&&LOOKS[pl.preId])?pl.preId:'';
+  if(!pl.lookAll){state.look.preId=(pl.preId&&LOOKS[pl.preId])?pl.preId:'';if(!['sad','lyric'].includes(sty))state.look.preId='';
+    const pu=PUNCH[sty]||PUNCH.flow;state.look.contrast=pu[0];state.look.sat=pu[1];state.look.glow=Math.max(state.look.glow||0,pu[2]);state.look.vignette=pu[3];state.look.grain=pu[4];}
   const num=(v,a,b)=>typeof v==='number'&&isFinite(v)?clamp(v,a,b):undefined;
   const fx=pl.fx||{},lk=pl.look||{};
   [['cutEvery',1,8],['shake',0,1],['zoom',0,.4],['flash',0,1],['rgb',0,1],['swing3d',0,1],['sfx',0,1],['velAmt',0,1.5],['pixBeat',0,1]].forEach(([k,a,b])=>{const v=num(fx[k],a,b);if(v!=null)state.fx[k]=k==='cutEvery'?([1,2,4,8].includes(Math.round(v))?Math.round(v):2):v;});
@@ -2479,17 +2484,19 @@ async function applyPlan(pl){
   if(state.mode==='auto'&&state.clips.some(c=>!c.demo)){if(state.clips.some(c=>!c.demo&&!c.an))await analyzeClips();state.dir={style:sty,heroId:heroId||bestClipId(),hook:pl.hook!==false};}
   refresh();
   // Texte: selten, kurz, auf starke Momente
-  state.layers=state.layers.filter(L=>!L.ai&&!L.demo);
+  state.layers=state.layers.filter(L=>L.type==='media'||L.type==='sfx');
   const T=total(),dp=state.dropEdit,p=beatPeriod();
   const beatAfter=(st,n)=>{const b=state.eb.filter(x=>x>st+.02);return b.length>=n?b[n-1]:st+n*p;};
   (pl.texts||[]).slice(0,3).forEach(tx=>{if(!tx||!tx.text)return;const nW=String(tx.text).trim().split(/\s+/).length;const anim=ANIMS.some(a=>a.id===tx.anim)?tx.anim:(tx.at==='drop'?'words':'pop');let st=0,en=T;
-    if(tx.at==='intro'){st=0;en=Math.min(T,dp!=null?Math.max(.8,Math.min(dp-.05,1.8)):1.8);}
+    const small=state.dir&&tx.at==='intro'&&!tx.card;
+    if(tx.at==='intro'){st=0;en=Math.min(T,dp!=null?(small&&dp>1.2?dp-.05:Math.max(.8,Math.min(dp-.05,1.8))):1.8);}
     else if(tx.at==='drop'){st=dp!=null?dp:Math.min(T*.35,T-1);en=anim==='words'||anim==='stack'?beatAfter(st,nW*(p<.4?2:1))+p*.9:st+Math.max(1.2,Math.min(2,4*p));en=Math.min(T,en,st+3.2);}
     else if(tx.at==='end'){st=Math.max(0,T-1.5);en=T;}
     else if(typeof tx.at==='number'){st=clamp(tx.at,0,T-.5);en=Math.min(T,st+1.5);}
     if(tx.card&&tx.at==='intro'){en=Math.min(T,dp!=null?Math.max(1.5,Math.min(dp,3.2)):3);}
-    const L=newText({ai:true,card:!!tx.card,name:'KI-Text',text:String(tx.text).slice(0,80),style:TSTYLES.some(s2=>s2.id===tx.style)?tx.style:'double',font:FONTS.some(f2=>f2.id===tx.font)?tx.font:'Cinzel',anim,size:tx.card?.8:tx.at==='intro'?.55:.5,start:st,end:Math.max(st+.3,en)});
-    state.layers.push(L);state.selLayer=L.id;if(!tx.card&&anim==='pop'){applyAnim('popin',true);applyAnim('fadeout',true);}});
+    const L=newText({ai:true,card:!!tx.card,name:'KI-Text',text:String(tx.text).slice(0,80),style:small?'gold':(TSTYLES.some(s2=>s2.id===tx.style)?tx.style:'double'),font:small?'Cinzel':(FONTS.some(f2=>f2.id===tx.font)?tx.font:'Cinzel'),anim:small?'pop':anim,size:tx.card?.8:small?.3:tx.at==='intro'?.55:.5,y:small?-.12:0,start:st,end:Math.max(st+.3,en)});
+    state.layers.push(L);state.selLayer=L.id;if(!tx.card&&(small||anim==='pop')){applyAnim('popin',true);applyAnim('fadeout',true);}});
+  if(state.dir&&T>6){const fd=newShape({ai:true,name:'Fade-Out',shape:'rect',color:'#000000',fill:true,w:1.3,h:2.1,radius:0,start:Math.max(0,T-.75),end:T,fx:{glow:0,blur:0,rgb:0,pix:0,wave:0,hue:0,bright:0,chroma:0,beatShake:0,beatPulse:0}});fd.kf.opacity=[{t:fd.start,v:0,e:'in'},{t:T-.05,v:1,e:'ease'}];state.layers.push(fd);}
   if(pl.burst&&dp!=null)addBurstAt(dp,true);
   const endT=state.layers.find(L=>L.ai&&L.type==='text'&&L.start>=T-1.7&&L.end>=T-.01&&L.style==='band');if(endT)state.layers.forEach(L=>{if(L.ai&&L.type==='text'&&L!==endT&&L.end>endT.start)L.end=Math.max(L.start+.3,endT.start);});
   state.selLayer=null;state.done.style=true;ensureProject();refresh();commit();syncBinds();renderLayerPanel();renderManual();updDemo();
